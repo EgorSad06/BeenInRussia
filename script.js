@@ -237,6 +237,7 @@ function updateProgress() {
     if (layer === 'regions') {
         regionLayer.style.display = 'inline';
         reserveLayer.style.display = 'none';
+        attractionsLayer.style.display = 'none'; // NEW: Скрываем слой достопримечательностей при переключении на регионы
 
         // Разблокировать регионы
         regions.forEach(r => {
@@ -248,9 +249,16 @@ function updateProgress() {
             }
         });
 
+        // NEW: Очищаем отметки достопримечательностей при переключении
+        document.querySelectorAll('.attraction').forEach(attraction => {
+            attraction.classList.remove('visited');
+        });
+        localStorage.setItem('visitedAttractions', JSON.stringify([]));
+
         } else if (layer === 'reserves') {
         regionLayer.style.display = 'inline'; // всё равно показываем регионы, но блокируем
         reserveLayer.style.display = 'inline';
+        attractionsLayer.style.display = 'none'; // NEW: Скрываем слой достопримечательностей при переключении на заповедники
 
         // Сделать регионы серыми и недоступными
         regions.forEach(r => {
@@ -266,6 +274,13 @@ function updateProgress() {
                 reserve.classList.remove('visited');
             }
         });
+
+        // NEW: Очищаем отметки достопримечательностей при переключении
+        document.querySelectorAll('.attraction').forEach(attraction => {
+            attraction.classList.remove('visited');
+        });
+        localStorage.setItem('visitedAttractions', JSON.stringify([]));
+
     } else if (layer === 'attractions') { // NEW BLOCK FOR ATTRACTIONS
         regionLayer.style.display = 'inline'; // всё равно показываем регионы, но блокируем
         reserveLayer.style.display = 'none'; // Скрываем слой заповедников
@@ -348,6 +363,43 @@ svg.addEventListener('mouseleave', function () {
         svg.style.cursor = 'default';
     }
 });
+
+// --- Обработчики для сенсорных событий (для мобильных устройств) ---
+let isTouching = false;
+let touchStartX = 0;
+let touchStartY = 0;
+let touchCurrentX = 0; // Текущее смещение по X для тача
+let touchCurrentY = 0; // Текущее смещение по Y для тача
+
+svg.addEventListener('touchstart', function (e) {
+    if (e.touches.length === 1) { // Только один палец для панорамирования
+        isTouching = true;
+        touchStartX = e.touches[0].clientX - currentX; // Сохраняем начальную позицию касания относительно текущего смещения карты
+        touchStartY = e.touches[0].clientY - currentY; // Сохраняем начальную позицию касания относительно текущего смещения карты
+        e.preventDefault(); // Предотвращаем прокрутку страницы
+    }
+});
+
+svg.addEventListener('touchmove', function (e) {
+    if (!isTouching || e.touches.length !== 1) return;
+
+    const newX = (e.touches[0].clientX - touchStartX);
+    const newY = (e.touches[0].clientY - touchStartY);
+
+    mapInner.setAttribute('transform', `translate(${newX}, ${newY}) scale(${scale})`);
+    touchCurrentX = newX;
+    touchCurrentY = newY;
+    e.preventDefault();
+});
+
+svg.addEventListener('touchend', function () {
+    if (isTouching) {
+        currentX = touchCurrentX; // Обновляем текущее смещение для мыши/тача
+        currentY = touchCurrentY; // Обновляем текущее смещение для мыши/тача
+        isTouching = false;
+    }
+});
+
 // --- Подсказки для достопримечательностей (attraction) ---
 // делегирование подсказок и кликов для poi / reserve / attraction
 (function setupPoiDelegation() {
@@ -419,13 +471,6 @@ localStorage.setItem('visitedAttractions', JSON.stringify(visitedAttractions));
 // для заповедников аналогично (если нужно) — можно и их сохранять в visitedReserves
 });
 })();
-
-
-
-
-
-
-
 
     // Отключение контекстного меню
     svg.addEventListener('contextmenu', function (e) {

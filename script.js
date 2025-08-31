@@ -542,6 +542,7 @@ svg.addEventListener('touchend', function () {
         const id = tappedElement.id;
 
         if (tappedElement.classList.contains('region')) {
+            console.log('touchend - Tapped a region. markBtn active:', markBtn.classList.contains('active'));
             if (markBtn.classList.contains('active')) {
                 if (tappedElement.classList.contains('visited')) {
                     tappedElement.classList.remove('visited');
@@ -554,6 +555,7 @@ svg.addEventListener('touchend', function () {
                 updateProgress();
             }
         } else if (tappedElement.classList.contains('reserve')) {
+            console.log('touchend - Tapped a reserve. currentLayer:', currentLayer, 'markBtn active:', markBtn.classList.contains('active'));
             if (currentLayer === 'reserves' && markBtn.classList.contains('active')) {
                 if (tappedElement.classList.contains('visited')) {
                     tappedElement.classList.remove('visited');
@@ -568,6 +570,7 @@ svg.addEventListener('touchend', function () {
                 updateProgress();
             }
         } else if (tappedElement.classList.contains('attraction') || tappedElement.classList.contains('poi')) {
+            console.log('touchend - Tapped an attraction/poi. currentLayer:', currentLayer, 'markBtn active:', markBtn.classList.contains('active'));
             if (currentLayer === 'attractions' && markBtn.classList.contains('active')) { // Добавлено условие currentLayer
                 tappedElement.classList.toggle('visited');
                 if (tappedElement.classList.contains('visited')) {

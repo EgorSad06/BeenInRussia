@@ -13,7 +13,7 @@ region.addEventListener('mouseenter', function(e) {
         tooltip.style.opacity = '1';
     });
 
-    region.addEventListener('mousemove', function(e) { // Оставить, если нужно более точное следование за курсором
+    region.addEventListener('mousemove', function(e) {
         tooltip.style.left = `${e.pageX + 0}px`;
         tooltip.style.top = `${e.pageY + -100}px`;
     });
@@ -46,9 +46,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const reserveLayer = document.getElementById('reserves-layer');
     let currentLayer = 'regions'; // по умолчанию
     const attractionsLayer = document.getElementById('attractions-layer'); // New: Достопримечательности слой
-    let visitedAttractions = JSON.parse(localStorage.getItem('visitedAttractions')) || []; 
-    let visitedReserves = JSON.parse(localStorage.getItem('visitedReserves')) || [];
+    let visitedAttractions = JSON.parse(localStorage.getItem('visitedAttractions') || '[]'); 
+    let visitedReserves = JSON.parse(localStorage.getItem('visitedReserves') || '[]');
+    console.log('DOMContentLoaded - Initial visitedAttractions:', visitedAttractions);
+    console.log('DOMContentLoaded - Initial visitedReserves:', visitedReserves);
+
+    // Ультимативный сброс всех отметок при загрузке страницы
+    document.querySelectorAll('.region, .reserve, .attraction, .poi').forEach(element => {
+        element.classList.remove('visited');
+    });
+
     initReserves(); 
+    initAttractions(); // NEW: Инициализация достопримечательностей при загрузке страницы
 
 
     // Хранилище посещенных регионов
@@ -95,6 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.querySelectorAll('.reserve').forEach(reserve => {
         const id = reserve.id;
+        console.log(`initReserves - Checking reserve: ${id}. Visited: ${visitedReserves.includes(id)}`);
         const name = reserve.dataset.name;
         const url = reserve.dataset.url;
 
@@ -142,10 +152,14 @@ document.addEventListener('DOMContentLoaded', function() {
             visitedReserves = visitedReserves.filter(r => r !== id);
         } else {
             this.classList.add('visited');
-            visitedReserves.push(id);
+            if (!visitedReserves.includes(id)) { // Проверяем, чтобы избежать дубликатов
+                visitedReserves.push(id);
+            }
         }
 
         localStorage.setItem('visitedReserves', JSON.stringify(visitedReserves));
+        console.log('reserve click - visitedReserves after update:', visitedReserves);
+        updateProgress(); // NEW: Обновляем прогресс после изменения статуса заповедника
         });
 
         // При загрузке
@@ -155,24 +169,46 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     }
 
-
-
+    function initAttractions() {
+        document.querySelectorAll('.attraction, .poi').forEach(attraction => {
+            const id = attraction.id;
+            console.log(`initAttractions - Checking attraction/poi: ${id}. Visited: ${visitedAttractions.includes(id)}`);
+            if (visitedAttractions.includes(id)) {
+                attraction.classList.add('visited');
+            }
+        });
+    }
 
 
     // Обновление прогресса
 function updateProgress() {
-    const totalRegions = document.querySelectorAll('.region'); // NodeList
-    const total = totalRegions.length;
+    const totalRegions = document.querySelectorAll('.region').length;
+    const totalReserves = document.querySelectorAll('.reserve').length;
+    const totalAttractions = document.querySelectorAll('.attraction, .poi').length;
 
-    // Считаем, сколько из них действительно посещены
-    let visited = 0;
-    totalRegions.forEach(region => {
-        if (visitedRegions.includes(region.id)) {
-            visited++;
+    const totalAll = totalRegions + totalReserves + totalAttractions;
+
+    let visitedTotal = 0;
+
+    visitedRegions.forEach(id => {
+        if (document.getElementById(id) && document.getElementById(id).classList.contains('region')) {
+            visitedTotal++;
         }
     });
 
-    const percent = total > 0 ? Math.round((visited / total) * 100) : 0;
+    visitedReserves.forEach(id => {
+        if (document.getElementById(id) && document.getElementById(id).classList.contains('reserve')) {
+            visitedTotal++;
+        }
+    });
+
+    visitedAttractions.forEach(id => {
+        if (document.getElementById(id) && (document.getElementById(id).classList.contains('attraction') || document.getElementById(id).classList.contains('poi'))) {
+            visitedTotal++;
+        }
+    });
+
+    const percent = totalAll > 0 ? Math.round((visitedTotal / totalAll) * 100) : 0;
 
     progressPercent.textContent = percent;
     progressFill.style.width = `${percent}%`;
@@ -226,13 +262,18 @@ function updateProgress() {
 
             // Переключаем слой
             switchLayer(selected);
-        });
+        }); 
     });
 
 
     //переключение слоёв
             function switchLayer(layer) {
     currentLayer = layer;
+
+    // Универсальный сброс всех отметок перед применением новых
+    document.querySelectorAll('.region, .reserve, .attraction, .poi').forEach(element => {
+        element.classList.remove('visited');
+    });
 
     if (layer === 'regions') {
         regionLayer.style.display = 'inline';
@@ -244,16 +285,16 @@ function updateProgress() {
             r.classList.remove('disabled');
             if (visitedRegions.includes(r.id)) {
                 r.classList.add('visited');
-            } else {
-                r.classList.remove('visited');
             }
         });
 
         // NEW: Очищаем отметки достопримечательностей при переключении
+        /* Удалено: 
         document.querySelectorAll('.attraction').forEach(attraction => {
             attraction.classList.remove('visited');
         });
         localStorage.setItem('visitedAttractions', JSON.stringify([]));
+        */
 
         } else if (layer === 'reserves') {
         regionLayer.style.display = 'inline'; // всё равно показываем регионы, но блокируем
@@ -262,10 +303,17 @@ function updateProgress() {
 
         // Сделать регионы серыми и недоступными
         regions.forEach(r => {
+
             r.classList.add('disabled');
-            r.classList.remove('visited');
         });
 
+        // Сначала очищаем все отметки заповедников
+        /* Удалено: 
+        document.querySelectorAll('.reserve').forEach(reserve => {
+            reserve.classList.remove('visited');
+        });
+        */
+        
         // Отметить посещённые заповедники
         document.querySelectorAll('.reserve').forEach(reserve => {
             if (visitedReserves.includes(reserve.id)) {
@@ -276,10 +324,13 @@ function updateProgress() {
         });
 
         // NEW: Очищаем отметки достопримечательностей при переключении
+        // Этот блок кода удален, так как он некорректно очищал visitedAttractions при переключении на слой reserves
+        /*
         document.querySelectorAll('.attraction').forEach(attraction => {
             attraction.classList.remove('visited');
         });
         localStorage.setItem('visitedAttractions', JSON.stringify([]));
+        */
 
     } else if (layer === 'attractions') { // NEW BLOCK FOR ATTRACTIONS
         regionLayer.style.display = 'inline'; // всё равно показываем регионы, но блокируем
@@ -288,12 +339,19 @@ function updateProgress() {
         // Показываем слой с достопримечательностями
         regions.forEach(r => r.classList.add('disabled'));
         // Сделать регионы серыми и недоступными
-        regions.forEach(r => {
+        /* Удалено: regions.forEach(r => {
             r.classList.remove('visited');
+        }); */
+
+        // Сначала очищаем все отметки достопримечательностей и poi
+        /* Удалено: 
+        document.querySelectorAll('.attraction, .poi').forEach(element => {
+            element.classList.remove('visited');
         });
+        */
 
         // Отметить посещённые достопримечательности (пока пусто, будет реализовано позже)
-        document.querySelectorAll('.attraction').forEach(attraction => {
+        document.querySelectorAll('.attraction, .poi').forEach(attraction => {
             if (visitedAttractions.includes(attraction.id)) {
                 attraction.classList.add('visited');
             } else {
@@ -370,26 +428,98 @@ let touchStartX = 0;
 let touchStartY = 0;
 let touchCurrentX = 0; // Текущее смещение по X для тача
 let touchCurrentY = 0; // Текущее смещение по Y для тача
+let isPinching = false;
+let initialDistance = 0;
+let initialScale = 1;
+let initialMidpointX = 0;
+let initialMidpointY = 0;
+
+// Добавляем переменные для отслеживания движения пальца и имитации клика
+let lastTouchX = 0;
+let lastTouchY = 0;
+let hasMoved = false; // Флаг, указывающий на то, было ли значительное движение пальца
+let initialTouchTarget = null; // Элемент, который был первым касанием
+
+const moveThreshold = 15; // Увеличиваем порог для определения движения
 
 svg.addEventListener('touchstart', function (e) {
+    console.log('touchstart - hasMoved (before reset):', hasMoved); // Отладочное сообщение
+    hasMoved = false; // Сброс флага движения при новом касании
     if (e.touches.length === 1) { // Только один палец для панорамирования
         isTouching = true;
         touchStartX = e.touches[0].clientX - currentX; // Сохраняем начальную позицию касания относительно текущего смещения карты
         touchStartY = e.touches[0].clientY - currentY; // Сохраняем начальную позицию касания относительно текущего смещения карты
-        e.preventDefault(); // Предотвращаем прокрутку страницы
+        lastTouchX = e.touches[0].clientX; // Сохраняем для определения движения
+        lastTouchY = e.touches[0].clientY; // Сохраняем для определения движения
+        initialTouchTarget = e.target; // Сохраняем элемент, на который было первое касание
+        // e.preventDefault(); // Пока не вызываем, чтобы дать сработать возможному click
+    } else if (e.touches.length === 2) { // Два пальца для масштабирования (pinch-to-zoom)
+        isPinching = true;
+        isTouching = false; // Отключаем панорамирование одним пальцем
+
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+
+        initialDistance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+        initialScale = scale;
+
+        initialMidpointX = (touch1.clientX + touch2.clientX) / 2;
+        initialMidpointY = (touch1.clientY + touch2.clientY) / 2;
+
+        e.preventDefault(); // Предотвращаем прокрутку страницы/масштабирование браузера
     }
 });
 
 svg.addEventListener('touchmove', function (e) {
-    if (!isTouching || e.touches.length !== 1) return;
+    if (isTouching && e.touches.length === 1) {
+        const currentTouchX = e.touches[0].clientX;
+        const currentTouchY = e.touches[0].clientY;
 
-    const newX = (e.touches[0].clientX - touchStartX);
-    const newY = (e.touches[0].clientY - touchStartY);
+        // Определяем, было ли значительное движение
+        const deltaX = Math.abs(currentTouchX - lastTouchX);
+        const deltaY = Math.abs(currentTouchY - lastTouchY);
+        // const moveThreshold = 5; // Порог в пикселях для определения движения
 
-    mapInner.setAttribute('transform', `translate(${newX}, ${newY}) scale(${scale})`);
-    touchCurrentX = newX;
-    touchCurrentY = newY;
-    e.preventDefault();
+        if (deltaX > moveThreshold || deltaY > moveThreshold) {
+            console.log('touchmove - Detected significant movement, setting hasMoved to true.'); // Отладочное сообщение
+            hasMoved = true;
+            e.preventDefault(); // Предотвращаем прокрутку страницы, если есть движение
+        }
+
+        lastTouchX = currentTouchX;
+        lastTouchY = currentTouchY;
+
+        if (hasMoved) { // Если мы уже начали двигать, то панорамируем
+            const newX = (e.touches[0].clientX - touchStartX);
+            const newY = (e.touches[0].clientY - touchStartY);
+
+            mapInner.setAttribute('transform', `translate(${newX}, ${newY}) scale(${scale})`);
+            touchCurrentX = newX;
+            touchCurrentY = newY;
+        }
+    } else if (isPinching && e.touches.length === 2) {
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+
+        const currentDistance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+        const scaleFactor = currentDistance / initialDistance;
+
+        const newScale = Math.max(minScale, Math.min(maxScale, initialScale * scaleFactor));
+
+        const currentMidpointX = (touch1.clientX + touch2.clientX) / 2;
+        const currentMidpointY = (touch1.clientY + touch2.clientY) / 2;
+
+        // Вычисляем смещение так, чтобы центр масштабирования оставался под средней точкой касаний
+        currentX = currentX + (currentMidpointX - initialMidpointX) - (currentMidpointX - initialMidpointX) * (newScale / scale);
+        currentY = currentY + (currentMidpointY - initialMidpointY) - (currentMidpointY - initialMidpointY) * (newScale / scale);
+
+        scale = newScale;
+        initialMidpointX = currentMidpointX; // Обновляем начальную точку для следующего движения
+        initialMidpointY = currentMidpointY;
+
+        mapInner.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
+        e.preventDefault();
+    }
 });
 
 svg.addEventListener('touchend', function () {
@@ -398,6 +528,61 @@ svg.addEventListener('touchend', function () {
         currentY = touchCurrentY; // Обновляем текущее смещение для мыши/тача
         isTouching = false;
     }
+    if (isPinching) {
+        isPinching = false;
+        // Обновляем currentX, currentY и scale для последующих операций
+        // (они уже обновлены в touchmove, но полезно явно зафиксировать)
+    }
+
+    // Если это был тап (короткое касание без движения), инициируем логику отметки напрямую
+    console.log('touchend - hasMoved:', hasMoved, 'initialTouchTarget:', initialTouchTarget); // Отладочное сообщение
+    if (!hasMoved && initialTouchTarget) {
+        console.log('touchend - Processing tap for:', initialTouchTarget.id);
+        const tappedElement = initialTouchTarget;
+        const id = tappedElement.id;
+
+        if (tappedElement.classList.contains('region')) {
+            if (markBtn.classList.contains('active')) {
+                if (tappedElement.classList.contains('visited')) {
+                    tappedElement.classList.remove('visited');
+                    visitedRegions = visitedRegions.filter(rId => rId !== id);
+                } else {
+                    tappedElement.classList.add('visited');
+                    visitedRegions.push(id);
+                }
+                localStorage.setItem('visitedRegions', JSON.stringify(visitedRegions));
+                updateProgress();
+            }
+        } else if (tappedElement.classList.contains('reserve')) {
+            if (currentLayer === 'reserves' && markBtn.classList.contains('active')) {
+                if (tappedElement.classList.contains('visited')) {
+                    tappedElement.classList.remove('visited');
+                    visitedReserves = visitedReserves.filter(rId => rId !== id);
+                } else {
+                    tappedElement.classList.add('visited');
+                    if (!visitedReserves.includes(id)) {
+                        visitedReserves.push(id);
+                    }
+                }
+                localStorage.setItem('visitedReserves', JSON.stringify(visitedReserves));
+                updateProgress();
+            }
+        } else if (tappedElement.classList.contains('attraction') || tappedElement.classList.contains('poi')) {
+            if (currentLayer === 'attractions' && markBtn.classList.contains('active')) { // Добавлено условие currentLayer
+                tappedElement.classList.toggle('visited');
+                if (tappedElement.classList.contains('visited')) {
+                    if (!visitedAttractions.includes(id)) {
+                        visitedAttractions.push(id);
+                    }
+                } else {
+                    visitedAttractions = visitedAttractions.filter(aId => aId !== id);
+                }
+                localStorage.setItem('visitedAttractions', JSON.stringify(visitedAttractions));
+                updateProgress();
+            }
+        }
+    }
+    initialTouchTarget = null; // Сброс целевого элемента
 });
 
 // --- Подсказки для достопримечательностей (attraction) ---
@@ -458,14 +643,18 @@ el.classList.toggle('visited');
 
 // если это достопримечательность — сохраняем в localStorage
 if (el.classList.contains('poi') || el.classList.contains('attraction')) {
-const id = el.id;
-visitedAttractions = JSON.parse(localStorage.getItem('visitedAttractions')) || [];
-if (el.classList.contains('visited')) {
-if (!visitedAttractions.includes(id)) visitedAttractions.push(id);
-} else {
-visitedAttractions = visitedAttractions.filter(x => x !== id);
-}
-localStorage.setItem('visitedAttractions', JSON.stringify(visitedAttractions));
+    const id = el.id;
+    // Удалено: visitedAttractions = JSON.parse(localStorage.getItem('visitedAttractions')) || []; // <-- ЭТО БЫЛО ПРИЧИНОЙ СБРОСА
+    if (el.classList.contains('visited')) {
+        if (!visitedAttractions.includes(id)) { // Проверяем, чтобы избежать дубликатов
+            visitedAttractions.push(id);
+        }
+    } else {
+        visitedAttractions = visitedAttractions.filter(x => x !== id);
+    }
+    localStorage.setItem('visitedAttractions', JSON.stringify(visitedAttractions));
+    console.log('attraction/poi click - visitedAttractions after update:', visitedAttractions);
+    updateProgress(); // NEW: Обновляем прогресс после изменения статуса достопримечательности/POI
 }
 
 // для заповедников аналогично (если нужно) — можно и их сохранять в visitedReserves

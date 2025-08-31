@@ -226,6 +226,7 @@
 
     .layer-selector {
         display: flex;
+        flex-direction: column; /* Изменено с row на column */
         justify-content: space-around;
         margin: 15px 0;
     }

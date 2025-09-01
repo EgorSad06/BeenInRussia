@@ -486,8 +486,6 @@ let touchCurrentY = 0; // Текущее смещение по Y для тача
 let isPinching = false;
 let initialDistance = 0;
 let initialScale = 1;
-let initialMidpointX = 0;
-let initialMidpointY = 0;
 
 // Добавляем переменные для отслеживания движения пальца и имитации клика
 let lastTouchX = 0;
@@ -529,16 +527,19 @@ svg.addEventListener('touchstart', function (e) {
         initialDistance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
         initialScale = scale;
 
+        // Отладочное сообщение для touchstart (два пальца)
+        console.log('touchstart (2 fingers) - initialDistance:', initialDistance, 'initialScale:', initialScale);
+
         const screenMidpointX = (touch1.clientX + touch2.clientX) / 2;
         const screenMidpointY = (touch1.clientY + touch2.clientY) / 2;
 
         const svgPoint = svg.createSVGPoint();
         svgPoint.x = screenMidpointX;
         svgPoint.y = screenMidpointY;
-        const svgMidpoint = svgPoint.matrixTransform(svg.getScreenCTM().inverse());
+        // const svgMidpoint = svgPoint.matrixTransform(svg.getScreenCTM().inverse()); // УДАЛЕНО
 
-        initialMidpointX = svgMidpoint.x;
-        initialMidpointY = svgMidpoint.y;
+        // initialMidpointX = svgMidpoint.x; // УДАЛЕНО
+        // initialMidpointY = svgMidpoint.y; // УДАЛЕНО
 
         e.preventDefault(); // Предотвращаем прокрутку страницы/масштабирование браузера
     }
@@ -586,15 +587,21 @@ svg.addEventListener('touchmove', function (e) {
 
         const newScale = Math.max(minScale, Math.min(maxScale, initialScale * scaleFactor));
 
+        // Отладочное сообщение для touchmove (два пальца)
+        console.log('touchmove (2 fingers) - currentDistance:', currentDistance, 'scaleFactor:', scaleFactor, 'newScale:', newScale, 'current scale:', scale, 'newScale === scale:', newScale === scale);
+
         if (newScale === scale) return; // Если масштаб не изменился, нет смысла обновлять позицию
 
-        // Вычисляем SVG-координаты точки, которая находится под центром между пальцами, ДО применения нового масштаба
-        const svgPointUnderMidpointX_old = (currentScreenMidpointX - currentX) / scale;
-        const svgPointUnderMidpointY_old = (currentScreenMidpointY - currentY) / scale;
+        const currentScreenMidpointX = (touch1.clientX + touch2.clientX) / 2;
+        const currentScreenMidpointY = (touch1.clientY + touch2.clientY) / 2;
 
-        // Новое смещение, чтобы эта SVG-точка оставалась под центром между пальцами на экране
-        currentX = currentScreenMidpointX - svgPointUnderMidpointX_old * newScale;
-        currentY = currentScreenMidpointY - svgPointUnderMidpointY_old * newScale;
+        // Вычисляем SVG-координаты точки, которая находится под текущим центром пальцев
+        const currentSvgMidpointX = (currentScreenMidpointX - currentX) / scale;
+        const currentSvgMidpointY = (currentScreenMidpointY - currentY) / scale;
+
+        // Новое смещение, чтобы эта SVG-точка оставалась под текущим центром пальцев на экране
+        currentX = currentScreenMidpointX - currentSvgMidpointX * newScale;
+        currentY = currentScreenMidpointY - currentSvgMidpointY * newScale;
 
         scale = newScale;
         mapInner.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);

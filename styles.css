@@ -21,8 +21,8 @@
     }
 
     .reserve {
-    fill: #a5d6a7;
-    stroke: #2e7d32;
+    fill: #90caf9 ;
+    stroke: #47a7f5;
     stroke-width: 1;
     cursor: pointer;
     transition: fill 0.2s;
@@ -98,10 +98,6 @@
         stroke-width: 0.5;
         transition: fill 0.3s ease;
         cursor: pointer;
-    }
-
-    .region:hover {
-        fill: #90caf9;
     }
 
     .region.visited {
@@ -275,4 +271,65 @@
     .poi.visited {
         fill: #4caf50;
         stroke: #2e7d32;
+    }
+
+    /* Стили для панели подтверждения */
+    .confirmation-panel {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: var(--white);
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transform: translateY(100%); /* Скрываем по умолчанию */
+        transition: transform 0.3s ease-out;
+        z-index: 110;
+    }
+
+    .confirmation-panel.visible {
+        transform: translateY(0%); /* Показываем панель */
+    }
+
+    .confirmation-panel .panel-content {
+        text-align: center;
+        width: 100%;
+    }
+
+    .confirmation-panel p {
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+
+    .confirmation-panel button {
+        background-color: var(--primary-color);
+        color: var(--white);
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        width: 100%;
+        max-width: 250px;
+    }
+
+    .confirmation-panel button:hover {
+        background-color: #388e3c;
+    }
+
+    @media (min-width: 600px) {
+        .confirmation-panel {
+            width: 350px; /* Шире для десктопа */
+            left: 50%;
+            transform: translateX(-50%) translateY(100%);
+        }
+
+        .confirmation-panel.visible {
+            transform: translateX(-50%) translateY(0%);
+        }
     }

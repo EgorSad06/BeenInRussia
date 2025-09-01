@@ -636,7 +636,7 @@ svg.addEventListener('touchend', function () {
             if (markBtn.classList.contains('active')) {
                 isVisited = visitedRegions.includes(id);
                 confirmationMessage = isVisited ? `Убрать отметку о посещении региона ${tappedElement.dataset.name}?` : `Отметить регион ${tappedElement.dataset.name} как посещённый?`;
-                buttonText = isVisited ? 'Убрать' : 'Отметить';
+                buttonText = isVisited ? 'Убрать' : 'Добавить';
             } else {
                 // Если кнопка отметки не активна, просто показать информацию (или ничего не делать)
                 // В данном случае, мы не показываем панель, если кнопка отметки не активна для регионов
@@ -647,7 +647,7 @@ svg.addEventListener('touchend', function () {
             if (currentLayer === 'reserves' && markBtn.classList.contains('active')) {
                 isVisited = visitedReserves.includes(id);
                 confirmationMessage = isVisited ? `Убрать отметку о посещении заповедника ${tappedElement.dataset.name}?` : `Отметить заповедник ${tappedElement.dataset.name} как посещённый?`;
-                buttonText = isVisited ? 'Убрать' : 'Отметить';
+                buttonText = isVisited ? 'Убрать' : 'Добавить';
             } else {
                 initialTouchTarget = null; // Сброс целевого элемента
                 return;
@@ -656,7 +656,7 @@ svg.addEventListener('touchend', function () {
             if (currentLayer === 'attractions' && markBtn.classList.contains('active')) {
                 isVisited = visitedAttractions.includes(id);
                 confirmationMessage = isVisited ? `Убрать отметку о посещении достопримечательности ${tappedElement.dataset.name}?` : `Отметить достопримечательность ${tappedElement.dataset.name} как посещённую?`;
-                buttonText = isVisited ? 'Убрать' : 'Отметить';
+                buttonText = isVisited ? 'Убрать' : 'Добавить';
             } else {
                 initialTouchTarget = null; // Сброс целевого элемента
                 return;
@@ -750,7 +750,7 @@ svg.addEventListener('touchend', function () {
             if (markBtn.classList.contains('active')) {
                 isVisited = visitedRegions.includes(id);
                 confirmationMessage = isVisited ? `Убрать отметку о посещении региона ${tappedElement.dataset.name}?` : `Отметить регион ${tappedElement.dataset.name} как посещённый?`;
-                buttonText = isVisited ? 'Убрать' : 'Отметить';
+                buttonText = isVisited ? 'Убрать' : 'Добавить';
             } else {
                 return;
             }
@@ -758,7 +758,7 @@ svg.addEventListener('touchend', function () {
             if (currentLayer === 'reserves' && markBtn.classList.contains('active')) {
                 isVisited = visitedReserves.includes(id);
                 confirmationMessage = isVisited ? `Убрать отметку о посещении заповедника ${tappedElement.dataset.name}?` : `Отметить заповедник ${tappedElement.dataset.name} как посещённый?`;
-                buttonText = isVisited ? 'Убрать' : 'Отметить';
+                buttonText = isVisited ? 'Убрать' : 'Добавить';
             } else {
                 return;
             }
@@ -766,7 +766,7 @@ svg.addEventListener('touchend', function () {
             if (currentLayer === 'attractions' && markBtn.classList.contains('active')) {
                 isVisited = visitedAttractions.includes(id);
                 confirmationMessage = isVisited ? `Убрать отметку о посещении достопримечательности ${tappedElement.dataset.name}?` : `Отметить достопримечательность ${tappedElement.dataset.name} как посещённую?`;
-                buttonText = isVisited ? 'Убрать' : 'Отметить';
+                buttonText = isVisited ? 'Убрать' : 'Добавить';
             } else {
                 return;
             }

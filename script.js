@@ -9,7 +9,7 @@ let currentX = 0;
 let currentY = 0;
 
 const scaleStep = 0.1;
-const minScale = 0.5;
+const minScale = 0.1;
 const maxScale = 10; // Увеличено максимальное масштабирование
 
 document.querySelectorAll('.region').forEach(region => {

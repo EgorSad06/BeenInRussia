@@ -494,6 +494,8 @@ let lastTouchX = 0;
 let lastTouchY = 0;
 let hasMoved = false; // Флаг, указывающий на то, было ли значительное движение пальца
 let initialTouchTarget = null; // Элемент, который был первым касанием
+let tapTimer = null; // Таймер для определения долгого нажатия/клика
+let isTapCandidate = false; // Флаг, указывающий, что текущее касание может быть тапом
 
 const moveThreshold = 15; // Увеличиваем порог для определения движения
 
@@ -506,7 +508,16 @@ svg.addEventListener('touchstart', function (e) {
         touchStartY = e.touches[0].clientY - currentY; // Сохраняем начальную позицию касания относительно текущего смещения карты
         lastTouchX = e.touches[0].clientX; // Сохраняем для определения движения
         lastTouchY = e.touches[0].clientY; // Сохраняем для определения движения
-        initialTouchTarget = e.target; // Сохраняем элемент, на который было первое касание
+        // Проверяем, является ли целевой элемент кликабельным для потенциального тапа
+        initialTouchTarget = e.target.closest('.region, .reserve, .attraction, .poi');
+        if (initialTouchTarget) {
+            isTapCandidate = true;
+            tapTimer = setTimeout(() => {
+                isTapCandidate = false; // Если таймер сработал, это не короткий тап
+            }, 100); // 100 мс для определения клика
+        } else {
+            isTapCandidate = false;
+        }
         // e.preventDefault(); // Пока не вызываем, чтобы дать сработать возможному click
     } else if (e.touches.length === 2) { // Два пальца для масштабирования (pinch-to-zoom)
         isPinching = true;
@@ -546,6 +557,12 @@ svg.addEventListener('touchmove', function (e) {
         if (deltaX > moveThreshold || deltaY > moveThreshold) {
             console.log('touchmove - Detected significant movement, setting hasMoved to true.'); // Отладочное сообщение
             hasMoved = true;
+            // Если было значительное движение, отменяем потенциальный тап
+            if (tapTimer) {
+                clearTimeout(tapTimer);
+                tapTimer = null;
+                isTapCandidate = false;
+            }
             e.preventDefault(); // Предотвращаем прокрутку страницы, если есть движение
         }
 
@@ -578,8 +595,8 @@ svg.addEventListener('touchmove', function (e) {
         const currentSvgMidpoint = svgPoint.matrixTransform(svg.getScreenCTM().inverse());
 
         // Вычисляем смещение так, чтобы центр масштабирования оставался под средней точкой касаний
-        currentX -= (currentSvgMidpoint.x - initialMidpointX) * (newScale / scale - 1);
-        currentY -= (currentSvgMidpoint.y - initialMidpointY) * (newScale / scale - 1);
+        currentX = currentX - (currentSvgMidpoint.x - initialMidpointX) * (newScale / scale - 1);
+        currentY = currentY - (currentSvgMidpoint.y - initialMidpointY) * (newScale / scale - 1);
 
         scale = newScale;
         // initialMidpointX и initialMidpointY не нужно обновлять здесь, они фиксируются при начале pinch-жеста
@@ -597,13 +614,13 @@ svg.addEventListener('touchend', function () {
     }
     if (isPinching) {
         isPinching = false;
-        // Обновляем currentX, currentY и scale для последующих операций
-        // (они уже обновлены в touchmove, но полезно явно зафиксировать)
+        // currentX, currentY и scale уже были обновлены в touchmove
     }
 
     // Если это был тап (короткое касание без движения), инициируем логику отметки напрямую
     console.log('touchend - hasMoved:', hasMoved, 'initialTouchTarget:', initialTouchTarget); // Отладочное сообщение
-    if (!hasMoved && initialTouchTarget) {
+    // Изменяем условие для обработки тапа: теперь опираемся на isTapCandidate
+    if (isTapCandidate && initialTouchTarget) {
         console.log('touchend - Processing tap for:', initialTouchTarget.id);
         const tappedElement = initialTouchTarget;
         const id = tappedElement.id;

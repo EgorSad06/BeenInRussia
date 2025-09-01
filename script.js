@@ -586,22 +586,17 @@ svg.addEventListener('touchmove', function (e) {
 
         const newScale = Math.max(minScale, Math.min(maxScale, initialScale * scaleFactor));
 
-        const currentScreenMidpointX = (touch1.clientX + touch2.clientX) / 2;
-        const currentScreenMidpointY = (touch1.clientY + touch2.clientY) / 2;
+        if (newScale === scale) return; // Если масштаб не изменился, нет смысла обновлять позицию
 
-        const svgPoint = svg.createSVGPoint();
-        svgPoint.x = currentScreenMidpointX;
-        svgPoint.y = currentScreenMidpointY;
-        const currentSvgMidpoint = svgPoint.matrixTransform(svg.getScreenCTM().inverse());
+        // Вычисляем SVG-координаты точки, которая находится под центром между пальцами, ДО применения нового масштаба
+        const svgPointUnderMidpointX_old = (currentScreenMidpointX - currentX) / scale;
+        const svgPointUnderMidpointY_old = (currentScreenMidpointY - currentY) / scale;
 
-        // Вычисляем смещение так, чтобы центр масштабирования оставался под средней точкой касаний
-        currentX = currentMidpoint.x - initialMidpoint.x * newScale;
-        currentY = currentMidpoint.y - initialMidpoint.y * newScale;
-        
+        // Новое смещение, чтобы эта SVG-точка оставалась под центром между пальцами на экране
+        currentX = currentScreenMidpointX - svgPointUnderMidpointX_old * newScale;
+        currentY = currentScreenMidpointY - svgPointUnderMidpointY_old * newScale;
 
         scale = newScale;
-        // initialMidpointX и initialMidpointY не нужно обновлять здесь, они фиксируются при начале pinch-жеста
-
         mapInner.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
         e.preventDefault();
     }

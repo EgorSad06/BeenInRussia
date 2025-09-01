@@ -595,8 +595,8 @@ svg.addEventListener('touchmove', function (e) {
         const currentSvgMidpoint = svgPoint.matrixTransform(svg.getScreenCTM().inverse());
 
         // Вычисляем смещение так, чтобы центр масштабирования оставался под средней точкой касаний
-        currentX = currentX - (currentSvgMidpoint.x - initialMidpointX) * (newScale / scale - 1);
-        currentY = currentY - (currentSvgMidpoint.y - initialMidpointY) * (newScale / scale - 1);
+        currentX = currentScreenMidpointX - initialMidpointX * newScale;
+        currentY = currentScreenMidpointY - initialMidpointY * newScale;
 
         scale = newScale;
         // initialMidpointX и initialMidpointY не нужно обновлять здесь, они фиксируются при начале pinch-жеста

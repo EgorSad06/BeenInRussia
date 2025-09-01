@@ -10,7 +10,7 @@ let currentY = 0;
 
 const scaleStep = 0.1;
 const minScale = 0.5;
-const maxScale = 5; // Увеличено максимальное масштабирование
+const maxScale = 10; // Увеличено максимальное масштабирование
 
 document.querySelectorAll('.region').forEach(region => {
     region.classList.remove('disabled');

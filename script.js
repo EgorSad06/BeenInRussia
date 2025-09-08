@@ -468,22 +468,23 @@ async function shareResults() {
         shareText += `- Достопримечательности: ${attractionPercentage}%\n`;
     }
 
-    shareText += `Присоединяйтесь и исследуйте!\nhttp://beeninrussia.ru/`;
+    shareText += `Присоединяйтесь и исследуйте!\n`; // Removed the URL from here
 
     if (navigator.share) {
         try {
             const shareData = {
                 title: 'Мои путешествия по России',
-                text: shareText
+                text: shareText,
+                url: 'http://beeninrussia.ru/'
             };
             console.log('Sharing data:', shareData);
             await navigator.share(shareData);
         } catch (error) {
             console.error('Error sharing:', error);
-            alert('Чтобы поделиться, скопируйте текст: ' + shareText);
+            alert('Чтобы поделиться, скопируйте текст: ' + shareText + ' http://beeninrussia.ru/');
         }
     } else {
-        alert('Чтобы поделиться, скопируйте текст: ' + shareText);
+        alert('Чтобы поделиться, скопируйте текст: ' + shareText + ' http://beeninrussia.ru/');
     }
 }
 

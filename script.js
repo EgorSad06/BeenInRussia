@@ -57,8 +57,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const attractionsLayer = document.getElementById('attractions-layer'); // New: Достопримечательности слой
     let visitedAttractions = JSON.parse(localStorage.getItem('visitedAttractions') || '[]'); 
     let visitedReserves = JSON.parse(localStorage.getItem('visitedReserves') || '[]');
-    console.log('DOMContentLoaded - Initial visitedAttractions:', visitedAttractions);
-    console.log('DOMContentLoaded - Initial visitedReserves:', visitedReserves);
 
     // NEW: Элементы панели подтверждения
     const confirmationPanel = document.getElementById('confirmation-panel');
@@ -96,7 +94,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Убраны локальные объявления tooltip и tooltipHovered, используем глобальные
         document.querySelectorAll('.reserve').forEach(reserve => {
             const id = reserve.id;
-            console.log(`initReserves - Checking reserve: ${id}. Visited: ${visitedReserves.includes(id)}`);
             const name = reserve.dataset.name;
             const url = reserve.dataset.url;
 
@@ -146,7 +143,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function initAttractions() {
         document.querySelectorAll('.attraction, .poi').forEach(attraction => {
             const id = attraction.id;
-            console.log(`initAttractions - Checking attraction/poi: ${id}. Visited: ${visitedAttractions.includes(id)}`);
             if (visitedAttractions.includes(id)) {
                 attraction.classList.add('visited');
             }
@@ -361,6 +357,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }); 
     });
 
+    // Добавляем обработчик для кнопки "Поделиться"
+    const shareButton = document.getElementById('settings-btn'); // Changed ID to settings-btn
+    if (shareButton) {
+        shareButton.addEventListener('click', shareResults);
+    }
 
     //переключение слоёв
     function switchLayer(layer) {
@@ -421,6 +422,71 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+
+    // NEW: Функция для получения процента посещенных регионов
+    function getVisitedRegionsPercentage() {
+        const totalRegions = regions.length;
+        const visitedCount = visitedRegions.length;
+        if (totalRegions === 0) return 0;
+        return ((visitedCount / totalRegions) * 100).toFixed(0);
+    }
+
+    // NEW: Функция для получения процента посещенных заповедников
+    function getVisitedReservesPercentage() {
+        const totalReserves = document.querySelectorAll('.reserve').length;
+        const visitedCount = visitedReserves.length;
+        if (totalReserves === 0) return 0;
+        return ((visitedCount / totalReserves) * 100).toFixed(0);
+    }
+
+    // NEW: Функция для получения процента посещенных достопримечательностей
+    function getVisitedAttractionsPercentage() {
+        const totalAttractions = document.querySelectorAll('.attraction, .poi').length;
+        const visitedCount = visitedAttractions.length;
+        if (totalAttractions === 0) return 0;
+        return ((visitedCount / totalAttractions) * 100).toFixed(0);
+    }
+
+    // Функция для обработки кнопки "Поделиться"
+async function shareResults() {
+    const regionPercentage = getVisitedRegionsPercentage();
+    const visitedRegionsCount = visitedRegions.length;
+    const totalRegionsCount = regions.length;
+    let shareText = 'Мои достижения на карте России:\n';
+    shareText += `Вы посетили ${visitedRegionsCount} регионов России, это ${regionPercentage}% от всей страны!\n`;
+    if (regionPercentage > 0) {
+        shareText += `- Регионы: ${regionPercentage}%\n`;
+    }
+
+    const reservePercentage = getVisitedReservesPercentage();
+    if (reservePercentage > 0) {
+        shareText += `- Заповедники: ${reservePercentage}%\n`;
+    }
+
+    const attractionPercentage = getVisitedAttractionsPercentage();
+    if (attractionPercentage > 0) {
+        shareText += `- Достопримечательности: ${attractionPercentage}%\n`;
+    }
+
+    shareText += `Присоединяйтесь и исследуйте!\nhttp://beeninrussia.ru/`;
+
+    if (navigator.share) {
+        try {
+            const shareData = {
+                title: 'Мои путешествия по России',
+                text: shareText
+            };
+            console.log('Sharing data:', shareData);
+            await navigator.share(shareData);
+        } catch (error) {
+            console.error('Error sharing:', error);
+            alert('Чтобы поделиться, скопируйте текст: ' + shareText);
+        }
+    } else {
+        alert('Чтобы поделиться, скопируйте текст: ' + shareText);
+    }
+}
+
 
     // Инициализация приложения
     initMap();
@@ -498,7 +564,6 @@ let isTapCandidate = false; // Флаг, указывающий, что теку
 const moveThreshold = 15; // Увеличиваем порог для определения движения
 
 svg.addEventListener('touchstart', function (e) {
-    console.log('touchstart - hasMoved (before reset):', hasMoved); // Отладочное сообщение
     hasMoved = false; // Сброс флага движения при новом касании
     if (e.touches.length === 1) { // Только один палец для панорамирования
         isTouching = true;

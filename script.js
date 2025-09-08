@@ -31,7 +31,7 @@ document.querySelectorAll('.region').forEach(region => {
         hideTooltipTimeout = setTimeout(() => {
             if (!tooltipHovered) {
                 tooltip.style.opacity = '0';
-            }
+            }ы
         }, 80); // 8 секунд
     });
 });
@@ -152,34 +152,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Обновление прогресса
     function updateProgress() {
-        const totalRegions = document.querySelectorAll('.region').length;
-        const totalReserves = document.querySelectorAll('.reserve').length; // Исправлена опечатка 'leng h'
-        const totalAttractions = document.querySelectorAll('.attraction, .poi').length;
-
-        const totalAll = totalRegions + totalReserves + totalAttractions;
-
-        let visitedTotal = 0;
-
-        visitedRegions.forEach(id => {
-            if (document.getElementById(id) && document.getElementById(id).classList.contains('region')) {
-                visitedTotal++;
-            }
-        });
-
-        visitedReserves.forEach(id => {
-            if (document.getElementById(id) && document.getElementById(id).classList.contains('reserve')) {
-                visitedTotal++;
-            }
-        });
-
-        visitedAttractions.forEach(id => {
-            if (document.getElementById(id) && (document.getElementById(id).classList.contains('attraction') || document.getElementById(id).classList.contains('poi'))) {
-                visitedTotal++;
-            }
-        });
-
-        const percent = totalAll > 0 ? Math.round((visitedTotal / totalAll) * 100) : 0;
-
+        // Calculate progress based on regions only
+        const percent = getVisitedRegionsPercentage();
+        
+        const progressPercent = document.getElementById('progress-percent');
+        const progressFill = document.getElementById('progress-fill');
+        
         progressPercent.textContent = percent;
         progressFill.style.width = `${percent}%`;
     }

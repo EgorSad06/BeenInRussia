@@ -453,7 +453,7 @@ async function shareResults() {
     const visitedRegionsCount = visitedRegions.length;
     const totalRegionsCount = regions.length;
     let shareText = 'Мои достижения на карте России:\n';
-    shareText += `Вы посетили ${visitedRegionsCount} регионов России, это ${regionPercentage}% от всей страны!\n`;
+    shareText += `Вы посетили регионов - ${visitedRegionsCount}. Это ${regionPercentage}% от всей страны!\n`;
     if (regionPercentage > 0) {
         shareText += `- Регионы: ${regionPercentage}%\n`;
     }

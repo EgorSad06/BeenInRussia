@@ -369,86 +369,11 @@ document.addEventListener('DOMContentLoaded', function() {
             reserveLayer.style.display = 'inline';
             attractionsLayer.style.display = 'none'; // NEW: Скрываем слой достопримечательностей при переключении на заповедники
 
-            // Функция для создания изображения с отмеченными регионами
-async function generateMapImage() {
-    const svg = document.querySelector('svg');
-    const clone = svg.cloneNode(true); // Клонируем SVG
-    const visitedRegionsSet = new Set(visitedRegions);
-
-    // Красим регионы в серый, а посещённые – в зелёный
-    clone.querySelectorAll('.region').forEach(region => {
-        if (visitedRegionsSet.has(region.id)) {
-            region.setAttribute('fill', '#4caf50'); // зелёный
-        } else {
-            region.setAttribute('fill', '#cccccc'); // серый
-        }
-    });
-
-    // Конвертируем в dataURL для вставки в <img>
-    const svgData = new XMLSerializer().serializeToString(clone);
-    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-    const svgUrl = URL.createObjectURL(svgBlob);
-
-    const img = new Image();
-    img.src = svgUrl;
-
-    return new Promise((resolve) => {
-        img.onload = () => {
-            const canvas = document.createElement("canvas");
-            canvas.width = svg.clientWidth;
-            canvas.height = svg.clientHeight;
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0);
-            resolve(canvas.toDataURL("image/png"));
-            URL.revokeObjectURL(svgUrl);
-        };
-    });
-}
-
-
             // Сделать регионы серыми и недоступными
             regions.forEach(r => {
                 r.classList.add('disabled');
             });
-        // Функция для обработки кнопки "Поделиться"
-async function shareResults() {
-    const regionPercentage = getVisitedRegionsPercentage();
-    const visitedRegionsCount = visitedRegions.length;
-    const totalRegionsCount = regions.length;
-    let shareText = 'Мои достижения на карте России:\n';
-    shareText += `Вы посетили регионов - ${visitedRegionsCount}. Это ${regionPercentage}% от всей страны!\n`;
-    if (regionPercentage > 0) {
-        shareText += `- Регионы: ${regionPercentage}%\n`;
-    }
-
-    const reservePercentage = getVisitedReservesPercentage();
-    if (reservePercentage > 0) {
-        shareText += `- Заповедники: ${reservePercentage}%\n`;
-    }
-
-    const attractionPercentage = getVisitedAttractionsPercentage();
-    if (attractionPercentage > 0) {
-        shareText += `- Достопримечательности: ${attractionPercentage}%\n`;
-    }
-
-    shareText += `Присоединяйтесь и исследуйте!\n`;
-
-    // Генерация изображения
-    const imageDataUrl = await generateMapImage();
-
-    // Создаём ссылку для скачивания
-    const link = document.createElement("a");
-    link.href = imageDataUrl;
-    link.download = "my_travel_map.png";
-
-    // Показываем окно для копирования текста и скачивания изображения
-    if (confirm(shareText + "\n\nСкачать изображение карты?")) {
-        link.click();
-    } else {
-        alert("Вы можете скопировать текст:\n" + shareText);
-    }
-}
-
+            
             // Отметить посещённые заповедники
             document.querySelectorAll('.reserve').forEach(reserve => {
                 if (visitedReserves.includes(reserve.id)) {
@@ -500,46 +425,95 @@ async function shareResults() {
         return ((visitedCount / totalAttractions) * 100).toFixed(0);
     }
 
-    // Функция для обработки кнопки "Поделиться"
-async function shareResults() {
-    const regionPercentage = getVisitedRegionsPercentage();
-    const visitedRegionsCount = visitedRegions.length;
-    const totalRegionsCount = regions.length;
-    let shareText = 'Мои достижения на карте России:\n';
-    shareText += `Вы посетили регионов - ${visitedRegionsCount}. Это ${regionPercentage}% от всей страны!\n`;
-    if (regionPercentage > 0) {
-        shareText += `- Регионы: ${regionPercentage}%\n`;
-    }
+    // NEW: Функция для генерации изображения карты
+    async function generateMapImage() {
+        const mapContainer = document.querySelector('.map-container'); // Или любой другой элемент, содержащий SVG
+        
+        // Убедимся, что domtoimage загружен
+        if (typeof domtoimage === 'undefined') {
+            console.error('dom-to-image library is not loaded.');
+            return null;
+        }
 
-    const reservePercentage = getVisitedReservesPercentage();
-    if (reservePercentage > 0) {
-        shareText += `- Заповедники: ${reservePercentage}%\n`;
-    }
-
-    const attractionPercentage = getVisitedAttractionsPercentage();
-    if (attractionPercentage > 0) {
-        shareText += `- Достопримечательности: ${attractionPercentage}%\n`;
-    }
-
-    shareText += `Присоединяйтесь и исследуйте!\n`; // Removed the URL from here
-
-    if (navigator.share) {
         try {
-            const shareData = {
-                title: 'Мои путешествия по России',
-                text: shareText,
-                url: 'http://beeninrussia.ru/'
-            };
-            console.log('Sharing data:', shareData);
-            await navigator.share(shareData);
+            // Клонируем SVG, чтобы применить временные стили без изменения DOM
+            const originalSvg = document.querySelector('svg');
+            const clonedSvg = originalSvg.cloneNode(true);
+
+            // Убираем трансформации, чтобы изображение было по центру и не обрезанным
+            const mapInnerClone = clonedSvg.querySelector('#map-inner');
+            if (mapInnerClone) {
+                mapInnerClone.setAttribute('transform', 'translate(0, 0) scale(1)');
+            }
+
+            // Временно добавляем клонированный SVG в DOM, чтобы domtoimage мог его обработать
+            clonedSvg.style.position = 'absolute';
+            clonedSvg.style.top = '-9999px';
+            clonedSvg.style.left = '-9999px';
+            document.body.appendChild(clonedSvg);
+
+            const dataUrl = await domtoimage.toPng(clonedSvg, {
+                width: originalSvg.clientWidth,
+                height: originalSvg.clientHeight,
+                style: {
+                    transform: 'scale(1)',
+                    transformOrigin: 'center',
+                    backgroundColor: '#e0e0e0' // Цвет фона, если SVG не занимает всю область
+                }
+            });
+
+            document.body.removeChild(clonedSvg); // Удаляем клонированный SVG
+
+            return dataUrl;
         } catch (error) {
-            console.error('Error sharing:', error);
+            console.error('Ошибка при генерации изображения карты:', error);
+            return null;
+        }
+    }
+
+    // Функция для обработки кнопки "Поделиться"
+    async function shareResults() {
+        const regionPercentage = getVisitedRegionsPercentage();
+        const visitedRegionsCount = visitedRegions.length;
+        const totalRegionsCount = regions.length;
+        let shareText = 'Мои достижения на карте России:\n';
+        shareText += `Вы посетили регионов - ${visitedRegionsCount}. Это ${regionPercentage}% от всей страны!\n`;
+        if (regionPercentage > 0) {
+            shareText += `- Регионы: ${regionPercentage}%\n`;
+        }
+
+        const reservePercentage = getVisitedReservesPercentage();
+        if (reservePercentage > 0) {
+            shareText += `- Заповедники: ${reservePercentage}%\n`;
+        }
+
+        const attractionPercentage = getVisitedAttractionsPercentage();
+        if (attractionPercentage > 0) {
+            shareText += `- Достопримечательности: ${attractionPercentage}%\n`;
+        }
+
+        shareText += `Присоединяйтесь и исследуйте!\n`; // Removed the URL from here
+
+        const mapImage = await generateMapImage(); // Генерируем изображение карты
+
+        if (navigator.share) {
+            try {
+                const shareData = {
+                    title: 'Мои путешествия по России',
+                    text: shareText,
+                    url: 'http://beeninrussia.ru/',
+                    files: mapImage ? [new File([await fetch(mapImage).then(res => res.blob())], 'map.png', { type: 'image/png' })] : []
+                };
+                console.log('Sharing data:', shareData);
+                await navigator.share(shareData);
+            } catch (error) {
+                console.error('Error sharing:', error);
+                alert('Чтобы поделиться, скопируйте текст: ' + shareText + ' http://beeninrussia.ru/');
+            }
+        } else {
             alert('Чтобы поделиться, скопируйте текст: ' + shareText + ' http://beeninrussia.ru/');
         }
-    } else {
-        alert('Чтобы поделиться, скопируйте текст: ' + shareText + ' http://beeninrussia.ru/');
     }
-}
 
 
     // Инициализация приложения

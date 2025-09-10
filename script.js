@@ -369,11 +369,86 @@ document.addEventListener('DOMContentLoaded', function() {
             reserveLayer.style.display = 'inline';
             attractionsLayer.style.display = 'none'; // NEW: Скрываем слой достопримечательностей при переключении на заповедники
 
+            // Функция для создания изображения с отмеченными регионами
+async function generateMapImage() {
+    const svg = document.querySelector('svg');
+    const clone = svg.cloneNode(true); // Клонируем SVG
+    const visitedRegionsSet = new Set(visitedRegions);
+
+    // Красим регионы в серый, а посещённые – в зелёный
+    clone.querySelectorAll('.region').forEach(region => {
+        if (visitedRegionsSet.has(region.id)) {
+            region.setAttribute('fill', '#4caf50'); // зелёный
+        } else {
+            region.setAttribute('fill', '#cccccc'); // серый
+        }
+    });
+
+    // Конвертируем в dataURL для вставки в <img>
+    const svgData = new XMLSerializer().serializeToString(clone);
+    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+    const svgUrl = URL.createObjectURL(svgBlob);
+
+    const img = new Image();
+    img.src = svgUrl;
+
+    return new Promise((resolve) => {
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = svg.clientWidth;
+            canvas.height = svg.clientHeight;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL("image/png"));
+            URL.revokeObjectURL(svgUrl);
+        };
+    });
+}
+
+
             // Сделать регионы серыми и недоступными
             regions.forEach(r => {
                 r.classList.add('disabled');
             });
-            
+        // Функция для обработки кнопки "Поделиться"
+async function shareResults() {
+    const regionPercentage = getVisitedRegionsPercentage();
+    const visitedRegionsCount = visitedRegions.length;
+    const totalRegionsCount = regions.length;
+    let shareText = 'Мои достижения на карте России:\n';
+    shareText += `Вы посетили регионов - ${visitedRegionsCount}. Это ${regionPercentage}% от всей страны!\n`;
+    if (regionPercentage > 0) {
+        shareText += `- Регионы: ${regionPercentage}%\n`;
+    }
+
+    const reservePercentage = getVisitedReservesPercentage();
+    if (reservePercentage > 0) {
+        shareText += `- Заповедники: ${reservePercentage}%\n`;
+    }
+
+    const attractionPercentage = getVisitedAttractionsPercentage();
+    if (attractionPercentage > 0) {
+        shareText += `- Достопримечательности: ${attractionPercentage}%\n`;
+    }
+
+    shareText += `Присоединяйтесь и исследуйте!\n`;
+
+    // Генерация изображения
+    const imageDataUrl = await generateMapImage();
+
+    // Создаём ссылку для скачивания
+    const link = document.createElement("a");
+    link.href = imageDataUrl;
+    link.download = "my_travel_map.png";
+
+    // Показываем окно для копирования текста и скачивания изображения
+    if (confirm(shareText + "\n\nСкачать изображение карты?")) {
+        link.click();
+    } else {
+        alert("Вы можете скопировать текст:\n" + shareText);
+    }
+}
+
             // Отметить посещённые заповедники
             document.querySelectorAll('.reserve').forEach(reserve => {
                 if (visitedReserves.includes(reserve.id)) {

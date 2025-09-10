@@ -31,7 +31,7 @@ document.querySelectorAll('.region').forEach(region => {
         hideTooltipTimeout = setTimeout(() => {
             if (!tooltipHovered) {
                 tooltip.style.opacity = '0';
-            }ы
+            }
         }, 80); // 8 секунд
     });
 });
@@ -440,6 +440,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const originalSvg = document.querySelector('svg');
             const clonedSvg = originalSvg.cloneNode(true);
 
+            // NEW: Устанавливаем явные размеры для клонированного SVG
+            clonedSvg.setAttribute('width', originalSvg.clientWidth);
+            clonedSvg.setAttribute('height', originalSvg.clientHeight);
+
             // NEW: Встраиваем стили из styles.css в клонированный SVG
             const style = document.createElement('style');
             style.textContent = `
@@ -793,7 +797,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 style: {
                     transform: 'scale(1)',
                     transformOrigin: 'center',
-                    backgroundColor: '#e0e0e0' // Цвет фона, если SVG не занимает всю область
                 }
             });
 

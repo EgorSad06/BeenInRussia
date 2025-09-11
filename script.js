@@ -792,16 +792,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const mapInnerClone = clonedSvg.querySelector('#map-inner');
             if (mapInnerClone) {
-                mapInnerClone.setAttribute('transform', mapInner.getAttribute('transform'));
+                // Устанавливаем трансформацию на клонированный SVG, используя текущие значения глобальных переменных
+                mapInnerClone.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
             }
 
             const dataUrl = await domtoimage.toPng(clonedSvg, {
                 width: svgWidth,
                 height: svgHeight,
-                style: {
-                    transform: 'scale(1)',
-                    transformOrigin: 'center',
-                }
+                // style: {
+                //     transform: 'scale(1)',
+                //     transformOrigin: 'center',
+                // }
             });
 
             return dataUrl;
@@ -961,7 +962,7 @@ svg.addEventListener('touchstart', function (e) {
         initialScale = scale;
 
         // Отладочное сообщение для touchstart (два пальца)
-        console.log('touchstart (2 fingers) - initialDistance:', initialDistance, 'initialScale:', initialScale);
+        // console.log('touchstart (2 fingers) - initialDistance:', initialDistance, 'initialScale:', initialScale);
 
         const screenMidpointX = (touch1.clientX + touch2.clientX) / 2;
         const screenMidpointY = (touch1.clientY + touch2.clientY) / 2;
@@ -989,7 +990,7 @@ svg.addEventListener('touchmove', function (e) {
         // const moveThreshold = 5; // Порог в пикселях для определения движения
 
         if (deltaX > moveThreshold || deltaY > moveThreshold) {
-            console.log('touchmove - Detected significant movement, setting hasMoved to true.'); // Отладочное сообщение
+            // console.log('touchmove - Detected significant movement, setting hasMoved to true.'); // Отладочное сообщение
             hasMoved = true;
             // Если было значительное движение, отменяем потенциальный тап
             if (tapTimer) {
@@ -1021,7 +1022,7 @@ svg.addEventListener('touchmove', function (e) {
         const newScale = Math.max(minScale, Math.min(maxScale, initialScale * scaleFactor));
 
         // Отладочное сообщение для touchmove (два пальца)
-        console.log('touchmove (2 fingers) - currentDistance:', currentDistance, 'scaleFactor:', scaleFactor, 'newScale:', newScale, 'current scale:', scale, 'newScale === scale:', newScale === scale);
+        // console.log('touchmove (2 fingers) - currentDistance:', currentDistance, 'scaleFactor:', scaleFactor, 'newScale:', newScale, 'current scale:', scale, 'newScale === scale:', newScale === scale);
 
         if (newScale === scale) return; // Если масштаб не изменился, нет смысла обновлять позицию
 
@@ -1054,10 +1055,10 @@ svg.addEventListener('touchend', function () {
     }
 
     // Если это был тап (короткое касание без движения), инициируем логику отметки напрямую
-    console.log('touchend - hasMoved:', hasMoved, 'initialTouchTarget:', initialTouchTarget); // Отладочное сообщение
+    // console.log('touchend - hasMoved:', hasMoved, 'initialTouchTarget:', initialTouchTarget); // Отладочное сообщение
     // Изменяем условие для обработки тапа: теперь опираемся на isTapCandidate
     if (isTapCandidate && initialTouchTarget) {
-        console.log('touchend - Processing tap for:', initialTouchTarget.id);
+        // console.log('touchend - Processing tap for:', initialTouchTarget.id);
         const tappedElement = initialTouchTarget;
         const id = tappedElement.id;
 

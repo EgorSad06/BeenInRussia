@@ -200,6 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!svgElement || !mapInnerElement) return Promise.resolve();
 
+        // Use the current SVG element's dimensions for centering calculations
         const svgWidth = parseFloat(svgElement.getAttribute('width')) || svgElement.clientWidth;
         const svgHeight = parseFloat(svgElement.getAttribute('height')) || svgElement.clientHeight;
 
@@ -212,17 +213,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const contentWidth = bbox.width;
             const contentHeight = bbox.height;
 
+            // Calculate scale to fit content within SVG, with some padding
             const scaleX = svgWidth / contentWidth;
             const scaleY = svgHeight / contentHeight;
             targetScale = Math.min(scaleX, scaleY) * 0.9; // 90% zoom to add a little padding
 
+            // Calculate translation to center the content within SVG
             targetX = (svgWidth - contentWidth * targetScale) / 2 - bbox.x * targetScale;
             targetY = (svgHeight - contentHeight * targetScale) / 2 - bbox.y * targetScale;
+
         } catch (e) {
-            console.warn('Could not get BBox for map-inner, using default center:', e);
+            console.warn('Could not get BBox for map-inner, using fallback center:', e);
             // Fallback to simple centering if getBBox fails
-            targetX = (svgWidth - originalSvg.getAttribute('width')) / 2;
-            targetY = (svgHeight - originalSvg.getAttribute('height')) / 2;
+            targetScale = 1; // Keep current scale if bbox is unknown or error
+            targetX = (svgWidth - parseFloat(svgElement.getAttribute('width'))) / 2;
+            targetY = (svgHeight - parseFloat(svgElement.getAttribute('height'))) / 2;
         }
 
         return animateMapTo(targetX, targetY, targetScale, duration);
@@ -476,21 +481,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const viewBoxAttr = originalSvg.getAttribute('viewBox');
             if (viewBoxAttr) {
                 // viewBox defines the coordinate system. Ensure it's copied.
-                const viewBox = viewBoxAttr.split(' ').map(Number);
-                // Only update svgWidth and svgHeight if viewBox provides meaningful dimensions
-                // and we're not explicitly overriding them with the original SVG's attributes.
-                // We prioritize original SVG's width/height attributes, then clientWidth/Height, then viewBox.
-                if (!originalSvg.getAttribute('width') && viewBox[2]) {
-                    svgWidth = viewBox[2];
-                }
-                if (!originalSvg.getAttribute('height') && viewBox[3]) {
-                    svgHeight = viewBox[3];
-                }
                 clonedSvg.setAttribute('viewBox', viewBoxAttr);
             }
 
-            // Reduce width by an additional 300 pixels as requested by the user
-            svgWidth = Math.max(100, svgWidth + 300); // Ensure width doesn't go below a reasonable minimum
+            // Apply the desired width reduction here for the generated image.
+            svgWidth = Math.max(100, svgWidth - 600); // Reduce width by 600 pixels
 
             clonedSvg.setAttribute('width', svgWidth);
             clonedSvg.setAttribute('height', svgHeight);
@@ -504,28 +499,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // NEW: Копируем вычисленные стили для регионов, заповедников и достопримечательностей
             const elementsToStyle = ['.region', '.reserve', '.attraction', '.poi'];
-
-            // Calculate default scale and position for the cloned map to be centered
-            const mapInnerOriginal = originalSvg.querySelector('#map-inner');
-            let defaultScale = 1;
-            let defaultX = 0;
-            let defaultY = 0;
-
-            if (mapInnerOriginal) {
-                const bbox = mapInnerOriginal.getBBox();
-                const contentWidth = bbox.width;
-                const contentHeight = bbox.height;
-
-                // Calculate scale to fit content within SVG, with some padding
-                const scaleX = svgWidth / contentWidth;
-                const scaleY = svgHeight / contentHeight;
-                defaultScale = Math.min(scaleX, scaleY) * 0.9; // 90% zoom to add a little padding
-
-                // Calculate translation to center the content
-                defaultX = (svgWidth - contentWidth * defaultScale) / 2 - bbox.x * defaultScale;
-                defaultY = (svgHeight - contentHeight * defaultScale) / 2 - bbox.y * defaultScale;
-            }
-
             elementsToStyle.forEach(selector => {
                 originalSvg.querySelectorAll(selector).forEach(originalElement => {
                     const clonedElement = clonedSvg.querySelector(`#${originalElement.id}`);
@@ -553,23 +526,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // Ensure mapInner is defined and accessible (it's a global variable)
+            // The live map (originalSvg) should already be in the desired centered state
+            // We just need to ensure the cloned map-inner gets the current transform
             const mapInnerClone = clonedSvg.querySelector('#map-inner');
-            if (mapInnerClone) {
-                // Apply the calculated default transformations for the screenshot
-                mapInnerClone.setAttribute('transform', `translate(${defaultX}, ${defaultY}) scale(${defaultScale})`);
+            const currentTransformString = originalSvg.querySelector('#map-inner').getAttribute('transform');
+            if (mapInnerClone && currentTransformString) {
+                mapInnerClone.setAttribute('transform', currentTransformString);
             }
 
-            // Remove previous console logs related to map transform, they are no longer relevant
-            // console.log('Current global scale:', scale);
-            // console.log('Current global X:', currentX);
-            // console.log('Current global Y:', currentY);
-            // console.log('Original mapInner transform:', originalSvg.querySelector('#map-inner').getAttribute('transform'));
+            // Remove previous console logs that are no longer relevant
             console.log('clonedSvg outerHTML before domtoimage:', clonedSvg.outerHTML);
             console.log('clonedSvg width:', clonedSvg.getAttribute('width'));
             console.log('clonedSvg height:', clonedSvg.getAttribute('height'));
             if (mapInnerClone) {
-                console.log('mapInnerClone transform AFTER setting (default):', mapInnerClone.getAttribute('transform'));
+                console.log('mapInnerClone transform:', mapInnerClone.getAttribute('transform'));
             }
 
             const dataUrl = await domtoimage.toPng(clonedSvg, {
@@ -607,7 +577,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         shareText += `Присоединяйтесь и исследуйте!\n`; // Removed the URL from here
 
-        await centerMapSmoothly(); // NEW: Дожидаемся центрирования карты перед генерацией изображения
+        // Get the Moscow region element
+        const moscowRegion = document.getElementById('RU-MOS');
+        if (moscowRegion) {
+            await flyToElement(moscowRegion, 1200); // Animate to Moscow region over 1.2 seconds
+        } else {
+            console.warn('Moscow region element (RU-MOS) not found. Centering map globally instead.');
+            await centerMapSmoothly(); // Fallback to global centering
+        }
+
         const mapImage = await generateMapImage(); // Генерируем изображение карты
 
         if (navigator.share) {
@@ -807,7 +785,7 @@ svg.addEventListener('touchmove', function (e) {
 });
 
 svg.addEventListener('touchend', function () {
-    isTouching = false;
+        isTouching = false;
     if (isPinching) {
         isPinching = false;
         // currentX, currentY и scale уже были обновлены в touchmove

@@ -164,8 +164,73 @@ document.addEventListener('DOMContentLoaded', function() {
 
     
     // NEW: Функция для плавного перемещения и масштабирования к элементу
+    function animateMapTo(targetX, targetY, targetScale, duration = 800) {
+        return new Promise(resolve => {
+            let startTime = null;
+
+            function animate(currentTime) {
+                if (!startTime) startTime = currentTime;
+                const progress = (currentTime - startTime) / duration;
+
+                if (progress < 1) {
+                    const easedProgress = 0.5 - Math.cos(progress * Math.PI) / 2; // Ease-in-out
+
+                    currentX = startX + (targetX - startX) * easedProgress;
+                    currentY = startY + (targetY - startY) * easedProgress;
+                    scale = startScale + (targetScale - startScale) * easedProgress;
+
+                    mapInner.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
+                    requestAnimationFrame(animate);
+                } else {
+                    currentX = targetX;
+                    currentY = targetY;
+                    scale = targetScale;
+                    mapInner.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
+                    resolve(); // Resolve the promise when animation is complete
+                }
+            }
+            requestAnimationFrame(animate);
+        });
+    }
+
+    // NEW: Функция для центрирования карты по умолчанию с анимацией
+    async function centerMapSmoothly(duration = 800) {
+        const svgElement = document.querySelector('svg');
+        const mapInnerElement = document.getElementById('map-inner');
+
+        if (!svgElement || !mapInnerElement) return Promise.resolve();
+
+        const svgWidth = parseFloat(svgElement.getAttribute('width')) || svgElement.clientWidth;
+        const svgHeight = parseFloat(svgElement.getAttribute('height')) || svgElement.clientHeight;
+
+        let targetScale = 1; // Default scale
+        let targetX = 0;     // Default X
+        let targetY = 0;     // Default Y
+
+        try {
+            const bbox = mapInnerElement.getBBox();
+            const contentWidth = bbox.width;
+            const contentHeight = bbox.height;
+
+            const scaleX = svgWidth / contentWidth;
+            const scaleY = svgHeight / contentHeight;
+            targetScale = Math.min(scaleX, scaleY) * 0.9; // 90% zoom to add a little padding
+
+            targetX = (svgWidth - contentWidth * targetScale) / 2 - bbox.x * targetScale;
+            targetY = (svgHeight - contentHeight * targetScale) / 2 - bbox.y * targetScale;
+        } catch (e) {
+            console.warn('Could not get BBox for map-inner, using default center:', e);
+            // Fallback to simple centering if getBBox fails
+            targetX = (svgWidth - originalSvg.getAttribute('width')) / 2;
+            targetY = (svgHeight - originalSvg.getAttribute('height')) / 2;
+        }
+
+        return animateMapTo(targetX, targetY, targetScale, duration);
+    }
+
+    // NEW: Функция для плавного перемещения и масштабирования к элементу
     function flyToElement(element, duration = 800) {
-        if (!element) return;
+        if (!element) return Promise.resolve(); // Return a resolved promise if no element
 
         let elementCenterX, elementCenterY;
         let elementWidth, elementHeight;
@@ -196,46 +261,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Вычисляем целевые координаты смещения (translate)
         // Цель: перевести центр элемента в центр видимой области SVG, учитывая новый масштаб
-        // Это сложнее, чем просто вычитать, нужно учитывать текущие преобразования SVG
-        // Сначала переводим центр видимой области SVG в координаты SVG-пространства
-        const screenCenter = svg.createSVGPoint();
-        screenCenter.x = svgWidth / 2;
-        screenCenter.y = svgHeight / 2;
-        const svgCenter = screenCenter.matrixTransform(svg.getScreenCTM().inverse());
+        const targetX = (svgWidth / 2 - elementCenterX * targetScale);
+        const targetY = (svgHeight / 2 - elementCenterY * targetScale);
 
-        // Затем рассчитываем смещение, необходимое для перемещения elementCenterX,Y к svgCenter
-        const newTargetX = (svgCenter.x - elementCenterX) * targetScale;
-        const newTargetY = (svgCenter.y - elementCenterY) * targetScale;
-
-        // Получаем текущие значения
-        const currentTransform = mapInner.transform.baseVal.consolidate();
-        let startX = currentTransform ? currentTransform.matrix.e : 0;
-        let startY = currentTransform ? currentTransform.matrix.f : 0;
-        let startScale = currentTransform ? currentTransform.matrix.a : 1;
-
-        let startTime = null;
-
-        function animate(currentTime) {
-            if (!startTime) startTime = currentTime;
-            const progress = (currentTime - startTime) / duration;
-
-            if (progress < 1) {
-                const easedProgress = 0.5 - Math.cos(progress * Math.PI) / 2; // Ease-in-out
-
-                currentX = startX + ((svgWidth / 2 - elementCenterX * targetScale) - startX) * easedProgress;
-                currentY = startY + ((svgHeight / 2 - elementCenterY * targetScale) - startY) * easedProgress;
-                scale = startScale + (targetScale - startScale) * easedProgress;
-
-                mapInner.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
-                requestAnimationFrame(animate);
-            } else {
-                currentX = (svgWidth / 2 - elementCenterX * targetScale);
-                currentY = (svgHeight / 2 - elementCenterY * targetScale);
-                scale = targetScale;
-                mapInner.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
-            }
-        }
-        requestAnimationFrame(animate);
+        return animateMapTo(targetX, targetY, targetScale, duration);
     }
     
     // Обработчики кнопок
@@ -578,6 +607,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         shareText += `Присоединяйтесь и исследуйте!\n`; // Removed the URL from here
 
+        await centerMapSmoothly(); // NEW: Дожидаемся центрирования карты перед генерацией изображения
         const mapImage = await generateMapImage(); // Генерируем изображение карты
 
         if (navigator.share) {

@@ -790,35 +790,23 @@ document.addEventListener('DOMContentLoaded', function() {
 `;
             clonedSvg.insertBefore(style, clonedSvg.firstChild);
 
+            // Извлекаем текущие трансформации из mapInner
+            const currentTransformString = mapInner.getAttribute('transform');
+            
+            // Применяем эти трансформации к корневому элементу map-inner внутри клонированного SVG
             const mapInnerClone = clonedSvg.querySelector('#map-inner');
-            if (mapInnerClone) {
-                // Устанавливаем трансформацию на клонированный SVG, используя текущие значения глобальных переменных
-                mapInnerClone.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
+            if (mapInnerClone && currentTransformString) {
+                mapInnerClone.setAttribute('transform', currentTransformString);
             }
 
-            // Создаем временный контейнер для рендеринга
-            const tempDiv = document.createElement('div');
-            tempDiv.style.position = 'absolute';
-            tempDiv.style.left = '-9999px';
-            tempDiv.style.width = `${svgWidth}px`;
-            tempDiv.style.height = `${svgHeight}px`;
-            tempDiv.style.overflow = 'hidden';
-            document.body.appendChild(tempDiv);
-
-            // Создаем новый SVG элемент для domtoimage
-            const renderSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            renderSvg.setAttribute('viewBox', originalSvg.getAttribute('viewBox'));
-            renderSvg.setAttribute('width', svgWidth);
-            renderSvg.setAttribute('height', svgHeight);
-            renderSvg.appendChild(clonedSvg);
-            tempDiv.appendChild(renderSvg);
-
-            const dataUrl = await domtoimage.toPng(renderSvg, {
+            const dataUrl = await domtoimage.toPng(clonedSvg, {
                 width: svgWidth,
                 height: svgHeight,
+                // style: {
+                //     transform: 'scale(1)',
+                //     transformOrigin: 'center',
+                // }
             });
-
-            tempDiv.remove(); // Удаляем временный элемент
 
             return dataUrl;
         } catch (error) {

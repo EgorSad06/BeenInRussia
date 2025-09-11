@@ -444,9 +444,6 @@ document.addEventListener('DOMContentLoaded', function() {
             let svgWidth = parseFloat(originalSvg.getAttribute('width')) || originalSvg.clientWidth;
             let svgHeight = parseFloat(originalSvg.getAttribute('height')) || originalSvg.clientHeight;
 
-            console.log('originalSvg.getAttribute(\'width\'):', originalSvg.getAttribute('width'));
-            console.log('originalSvg.clientWidth:', originalSvg.clientWidth);
-
             const viewBoxAttr = originalSvg.getAttribute('viewBox');
             if (viewBoxAttr) {
                 // viewBox defines the coordinate system. Ensure it's copied.
@@ -478,6 +475,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // NEW: Копируем вычисленные стили для регионов, заповедников и достопримечательностей
             const elementsToStyle = ['.region', '.reserve', '.attraction', '.poi'];
+
+            // Calculate default scale and position for the cloned map to be centered
+            const mapInnerOriginal = originalSvg.querySelector('#map-inner');
+            let defaultScale = 1;
+            let defaultX = 0;
+            let defaultY = 0;
+
+            if (mapInnerOriginal) {
+                const bbox = mapInnerOriginal.getBBox();
+                const contentWidth = bbox.width;
+                const contentHeight = bbox.height;
+
+                // Calculate scale to fit content within SVG, with some padding
+                const scaleX = svgWidth / contentWidth;
+                const scaleY = svgHeight / contentHeight;
+                defaultScale = Math.min(scaleX, scaleY) * 0.9; // 90% zoom to add a little padding
+
+                // Calculate translation to center the content
+                defaultX = (svgWidth - contentWidth * defaultScale) / 2 - bbox.x * defaultScale;
+                defaultY = (svgHeight - contentHeight * defaultScale) / 2 - bbox.y * defaultScale;
+            }
+
             elementsToStyle.forEach(selector => {
                 originalSvg.querySelectorAll(selector).forEach(originalElement => {
                     const clonedElement = clonedSvg.querySelector(`#${originalElement.id}`);
@@ -508,19 +527,20 @@ document.addEventListener('DOMContentLoaded', function() {
             // Ensure mapInner is defined and accessible (it's a global variable)
             const mapInnerClone = clonedSvg.querySelector('#map-inner');
             if (mapInnerClone) {
-                // Use the global scale, currentX, currentY from the live map state
-                mapInnerClone.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
+                // Apply the calculated default transformations for the screenshot
+                mapInnerClone.setAttribute('transform', `translate(${defaultX}, ${defaultY}) scale(${defaultScale})`);
             }
 
-            console.log('Current global scale:', scale);
-            console.log('Current global X:', currentX);
-            console.log('Current global Y:', currentY);
-            console.log('Original mapInner transform:', originalSvg.querySelector('#map-inner').getAttribute('transform'));
+            // Remove previous console logs related to map transform, they are no longer relevant
+            // console.log('Current global scale:', scale);
+            // console.log('Current global X:', currentX);
+            // console.log('Current global Y:', currentY);
+            // console.log('Original mapInner transform:', originalSvg.querySelector('#map-inner').getAttribute('transform'));
             console.log('clonedSvg outerHTML before domtoimage:', clonedSvg.outerHTML);
             console.log('clonedSvg width:', clonedSvg.getAttribute('width'));
             console.log('clonedSvg height:', clonedSvg.getAttribute('height'));
             if (mapInnerClone) {
-                console.log('mapInnerClone transform AFTER setting:', mapInnerClone.getAttribute('transform'));
+                console.log('mapInnerClone transform AFTER setting (default):', mapInnerClone.getAttribute('transform'));
             }
 
             const dataUrl = await domtoimage.toPng(clonedSvg, {

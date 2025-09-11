@@ -440,9 +440,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const originalSvg = document.querySelector('svg');
             const clonedSvg = originalSvg.cloneNode(true);
 
-            // NEW: Устанавливаем явные размеры для клонированного SVG
-            clonedSvg.setAttribute('width', originalSvg.clientWidth);
-            clonedSvg.setAttribute('height', originalSvg.clientHeight);
+            // Получаем viewBox, чтобы убедиться, что захватываем всю карту
+            const viewBox = originalSvg.getAttribute('viewBox').split(' ').map(Number);
+            const svgWidth = viewBox[2];
+            const svgHeight = viewBox[3];
+
+            clonedSvg.setAttribute('width', svgWidth);
+            clonedSvg.setAttribute('height', svgHeight);
 
             // NEW: Встраиваем стили из styles.css в клонированный SVG
             const style = document.createElement('style');
@@ -788,7 +792,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Убираем трансформации, чтобы изображение было по центру и не обрезанным
             const mapInnerClone = clonedSvg.querySelector('#map-inner');
             if (mapInnerClone) {
-                mapInnerClone.setAttribute('transform', 'translate(0, 0) scale(1)');
+                // Клонируем текущие трансформации
+                mapInnerClone.setAttribute('transform', mapInner.getAttribute('transform'));
             }
 
             const dataUrl = await domtoimage.toPng(clonedSvg, {

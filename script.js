@@ -463,8 +463,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 clonedSvg.setAttribute('viewBox', viewBoxAttr);
             }
 
-            // Reduce width by 100 pixels as requested by the user
-            svgWidth = Math.max(100, svgWidth - 100); // Ensure width doesn't go below a reasonable minimum
+            // Reduce width by an additional 300 pixels as requested by the user
+            svgWidth = Math.max(100, svgWidth - 300); // Ensure width doesn't go below a reasonable minimum
 
             clonedSvg.setAttribute('width', svgWidth);
             clonedSvg.setAttribute('height', svgHeight);

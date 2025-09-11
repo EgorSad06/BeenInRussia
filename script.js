@@ -754,11 +754,7 @@ svg.addEventListener('touchmove', function (e) {
 });
 
 svg.addEventListener('touchend', function () {
-    if (isTouching) {
-        currentX = touchCurrentX; // Обновляем текущее смещение для мыши/тача
-        currentY = touchCurrentY; // Обновляем текущее смещение для мыши/тача
-        isTouching = false;
-    }
+    isTouching = false;
     if (isPinching) {
         isPinching = false;
         // currentX, currentY и scale уже были обновлены в touchmove

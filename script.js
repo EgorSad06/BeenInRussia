@@ -796,14 +796,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 mapInnerClone.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
             }
 
-            const dataUrl = await domtoimage.toPng(clonedSvg, {
+            // Создаем временный контейнер для рендеринга
+            const tempDiv = document.createElement('div');
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.width = `${svgWidth}px`;
+            tempDiv.style.height = `${svgHeight}px`;
+            tempDiv.style.overflow = 'hidden';
+            document.body.appendChild(tempDiv);
+
+            // Создаем новый SVG элемент для domtoimage
+            const renderSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            renderSvg.setAttribute('viewBox', originalSvg.getAttribute('viewBox'));
+            renderSvg.setAttribute('width', svgWidth);
+            renderSvg.setAttribute('height', svgHeight);
+            renderSvg.appendChild(clonedSvg);
+            tempDiv.appendChild(renderSvg);
+
+            const dataUrl = await domtoimage.toPng(renderSvg, {
                 width: svgWidth,
                 height: svgHeight,
-                // style: {
-                //     transform: 'scale(1)',
-                //     transformOrigin: 'center',
-                // }
             });
+
+            tempDiv.remove(); // Удаляем временный элемент
 
             return dataUrl;
         } catch (error) {

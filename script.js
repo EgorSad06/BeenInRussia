@@ -464,7 +464,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Reduce width by an additional 300 pixels as requested by the user
-            svgWidth = Math.max(100, svgWidth - 400); // Ensure width doesn't go below a reasonable minimum
+            svgWidth = Math.max(100, svgWidth - 350); // Ensure width doesn't go below a reasonable minimum
 
             clonedSvg.setAttribute('width', svgWidth);
             clonedSvg.setAttribute('height', svgHeight);

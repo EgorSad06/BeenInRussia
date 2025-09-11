@@ -512,12 +512,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 mapInnerClone.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
             }
 
-            console.log('originalSvg outerHTML:', originalSvg.outerHTML);
+            console.log('Current global scale:', scale);
+            console.log('Current global X:', currentX);
+            console.log('Current global Y:', currentY);
+            console.log('Original mapInner transform:', originalSvg.querySelector('#map-inner').getAttribute('transform'));
             console.log('clonedSvg outerHTML before domtoimage:', clonedSvg.outerHTML);
             console.log('clonedSvg width:', clonedSvg.getAttribute('width'));
             console.log('clonedSvg height:', clonedSvg.getAttribute('height'));
             if (mapInnerClone) {
-                console.log('mapInnerClone transform:', mapInnerClone.getAttribute('transform'));
+                console.log('mapInnerClone transform AFTER setting:', mapInnerClone.getAttribute('transform'));
             }
 
             const dataUrl = await domtoimage.toPng(clonedSvg, {

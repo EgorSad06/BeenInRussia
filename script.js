@@ -444,11 +444,27 @@ document.addEventListener('DOMContentLoaded', function() {
             let svgWidth = parseFloat(originalSvg.getAttribute('width')) || originalSvg.clientWidth;
             let svgHeight = parseFloat(originalSvg.getAttribute('height')) || originalSvg.clientHeight;
 
+            console.log('originalSvg.getAttribute(\'width\'):', originalSvg.getAttribute('width'));
+            console.log('originalSvg.clientWidth:', originalSvg.clientWidth);
+
             const viewBoxAttr = originalSvg.getAttribute('viewBox');
             if (viewBoxAttr) {
                 // viewBox defines the coordinate system. Ensure it's copied.
+                const viewBox = viewBoxAttr.split(' ').map(Number);
+                // Only update svgWidth and svgHeight if viewBox provides meaningful dimensions
+                // and we're not explicitly overriding them with the original SVG's attributes.
+                // We prioritize original SVG's width/height attributes, then clientWidth/Height, then viewBox.
+                if (!originalSvg.getAttribute('width') && viewBox[2]) {
+                    svgWidth = viewBox[2];
+                }
+                if (!originalSvg.getAttribute('height') && viewBox[3]) {
+                    svgHeight = viewBox[3];
+                }
                 clonedSvg.setAttribute('viewBox', viewBoxAttr);
             }
+
+            // Reduce width by 100 pixels as requested by the user
+            svgWidth = Math.max(100, svgWidth - 100); // Ensure width doesn't go below a reasonable minimum
 
             clonedSvg.setAttribute('width', svgWidth);
             clonedSvg.setAttribute('height', svgHeight);

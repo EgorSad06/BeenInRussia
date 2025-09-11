@@ -438,15 +438,15 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             // Клонируем SVG, чтобы применить временные стили без изменения DOM
             const originalSvg = document.querySelector('svg');
+            console.log('originalSvg:', originalSvg);
             const clonedSvg = originalSvg.cloneNode(true);
+            console.log('clonedSvg:', clonedSvg);
 
             // Получаем viewBox, чтобы убедиться, что захватываем всю карту
             const viewBox = originalSvg.getAttribute('viewBox').split(' ').map(Number);
             const svgWidth = viewBox[2];
             const svgHeight = viewBox[3];
-
-            // clonedSvg.setAttribute('width', svgWidth);
-            // clonedSvg.setAttribute('height', svgHeight);
+            console.log('viewBox dimensions - svgWidth:', svgWidth, 'svgHeight:', svgHeight);
 
             // NEW: Встраиваем стили из styles.css в клонированный SVG
             const style = document.createElement('style');
@@ -788,12 +788,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 `;
             clonedSvg.insertBefore(style, clonedSvg.firstChild);
+            console.log('Styles injected into clonedSvg.');
 
             // Убираем трансформации, чтобы изображение было по центру и не обрезанным
             const mapInnerClone = clonedSvg.querySelector('#map-inner');
             if (mapInnerClone) {
                 // Клонируем текущие трансформации
                 mapInnerClone.setAttribute('transform', mapInner.getAttribute('transform'));
+                console.log('mapInnerClone transform set to:', mapInner.getAttribute('transform'));
             }
 
             const dataUrl = await domtoimage.toPng(clonedSvg, {
@@ -804,6 +806,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     transformOrigin: 'center',
                 }
             });
+            console.log('domtoimage.toPng returned dataUrl:', dataUrl ? 'Success' : 'Failed');
 
             return dataUrl;
         } catch (error) {

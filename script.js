@@ -450,6 +450,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 svgHeight = viewBox[3];
             }
 
+            clonedSvg.setAttribute('width', svgWidth);
+            clonedSvg.setAttribute('height', svgHeight);
+
             // Удаляем блок встраивания стилей, полагаясь на внешний styles.css
             // const style = document.createElement('style');
             // style.textContent = `
@@ -797,6 +800,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const mapInnerClone = clonedSvg.querySelector('#map-inner');
             if (mapInnerClone && currentTransformString) {
                 mapInnerClone.setAttribute('transform', currentTransformString);
+            }
+
+            console.log('clonedSvg outerHTML before domtoimage:', clonedSvg.outerHTML);
+            console.log('clonedSvg width:', clonedSvg.getAttribute('width'));
+            console.log('clonedSvg height:', clonedSvg.getAttribute('height'));
+            if (mapInnerClone) {
+                console.log('mapInnerClone transform:', mapInnerClone.getAttribute('transform'));
             }
 
             const dataUrl = await domtoimage.toPng(clonedSvg, {

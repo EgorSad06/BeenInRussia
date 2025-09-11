@@ -445,8 +445,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const svgWidth = viewBox[2];
             const svgHeight = viewBox[3];
 
-            clonedSvg.setAttribute('width', svgWidth);
-            clonedSvg.setAttribute('height', svgHeight);
+            // clonedSvg.setAttribute('width', svgWidth);
+            // clonedSvg.setAttribute('height', svgHeight);
 
             // NEW: Встраиваем стили из styles.css в клонированный SVG
             const style = document.createElement('style');
@@ -797,8 +797,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const dataUrl = await domtoimage.toPng(clonedSvg, {
-                width: originalSvg.clientWidth,
-                height: originalSvg.clientHeight,
+                width: svgWidth,
+                height: svgHeight,
                 style: {
                     transform: 'scale(1)',
                     transformOrigin: 'center',

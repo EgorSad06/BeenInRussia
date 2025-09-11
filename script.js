@@ -164,78 +164,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     
     // NEW: Функция для плавного перемещения и масштабирования к элементу
-    function animateMapTo(targetX, targetY, targetScale, duration = 800) {
-        return new Promise(resolve => {
-            let startTime = null;
-
-            function animate(currentTime) {
-                if (!startTime) startTime = currentTime;
-                const progress = (currentTime - startTime) / duration;
-
-                if (progress < 1) {
-                    const easedProgress = 0.5 - Math.cos(progress * Math.PI) / 2; // Ease-in-out
-
-                    currentX = startX + (targetX - startX) * easedProgress;
-                    currentY = startY + (targetY - startY) * easedProgress;
-                    scale = startScale + (targetScale - startScale) * easedProgress;
-
-                    mapInner.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
-                    requestAnimationFrame(animate);
-                } else {
-                    currentX = targetX;
-                    currentY = targetY;
-                    scale = targetScale;
-                    mapInner.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
-                    resolve(); // Resolve the promise when animation is complete
-                }
-            }
-            requestAnimationFrame(animate);
-        });
-    }
-
-    // NEW: Функция для центрирования карты по умолчанию с анимацией
-    async function centerMapSmoothly(duration = 800) {
-        const svgElement = document.querySelector('svg');
-        const mapInnerElement = document.getElementById('map-inner');
-
-        if (!svgElement || !mapInnerElement) return Promise.resolve();
-
-        // Use the current SVG element's dimensions for centering calculations
-        const svgWidth = parseFloat(svgElement.getAttribute('width')) || svgElement.clientWidth;
-        const svgHeight = parseFloat(svgElement.getAttribute('height')) || svgElement.clientHeight;
-
-        let targetScale = 1; // Default scale
-        let targetX = 0;     // Default X
-        let targetY = 0;     // Default Y
-
-        try {
-            const bbox = mapInnerElement.getBBox();
-            const contentWidth = bbox.width;
-            const contentHeight = bbox.height;
-
-            // Calculate scale to fit content within SVG, with some padding
-            const scaleX = svgWidth / contentWidth;
-            const scaleY = svgHeight / contentHeight;
-            targetScale = Math.min(scaleX, scaleY) * 0.9; // 90% zoom to add a little padding
-
-            // Calculate translation to center the content within SVG
-            targetX = (svgWidth - contentWidth * targetScale) / 2 - bbox.x * targetScale;
-            targetY = (svgHeight - contentHeight * targetScale) / 2 - bbox.y * targetScale;
-
-        } catch (e) {
-            console.warn('Could not get BBox for map-inner, using fallback center:', e);
-            // Fallback to simple centering if getBBox fails
-            targetScale = 1; // Keep current scale if bbox is unknown or error
-            targetX = (svgWidth - parseFloat(svgElement.getAttribute('width'))) / 2;
-            targetY = (svgHeight - parseFloat(svgElement.getAttribute('height'))) / 2;
-        }
-
-        return animateMapTo(targetX, targetY, targetScale, duration);
-    }
-
-    // NEW: Функция для плавного перемещения и масштабирования к элементу
     function flyToElement(element, duration = 800) {
-        if (!element) return Promise.resolve(); // Return a resolved promise if no element
+        if (!element) return;
 
         let elementCenterX, elementCenterY;
         let elementWidth, elementHeight;
@@ -266,10 +196,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Вычисляем целевые координаты смещения (translate)
         // Цель: перевести центр элемента в центр видимой области SVG, учитывая новый масштаб
-        const targetX = (svgWidth / 2 - elementCenterX * targetScale);
-        const targetY = (svgHeight / 2 - elementCenterY * targetScale);
+        // Это сложнее, чем просто вычитать, нужно учитывать текущие преобразования SVG
+        // Сначала переводим центр видимой области SVG в координаты SVG-пространства
+        const screenCenter = svg.createSVGPoint();
+        screenCenter.x = svgWidth / 2;
+        screenCenter.y = svgHeight / 2;
+        const svgCenter = screenCenter.matrixTransform(svg.getScreenCTM().inverse());
 
-        return animateMapTo(targetX, targetY, targetScale, duration);
+        // Затем рассчитываем смещение, необходимое для перемещения elementCenterX,Y к svgCenter
+        const newTargetX = (svgCenter.x - elementCenterX) * targetScale;
+        const newTargetY = (svgCenter.y - elementCenterY) * targetScale;
+
+        // Получаем текущие значения
+        const currentTransform = mapInner.transform.baseVal.consolidate();
+        let startX = currentTransform ? currentTransform.matrix.e : 0;
+        let startY = currentTransform ? currentTransform.matrix.f : 0;
+        let startScale = currentTransform ? currentTransform.matrix.a : 1;
+
+        let startTime = null;
+
+        function animate(currentTime) {
+            if (!startTime) startTime = currentTime;
+            const progress = (currentTime - startTime) / duration;
+
+            if (progress < 1) {
+                const easedProgress = 0.5 - Math.cos(progress * Math.PI) / 2; // Ease-in-out
+
+                currentX = startX + ((svgWidth / 2 - elementCenterX * targetScale) - startX) * easedProgress;
+                currentY = startY + ((svgHeight / 2 - elementCenterY * targetScale) - startY) * easedProgress;
+                scale = startScale + (targetScale - startScale) * easedProgress;
+
+                mapInner.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
+                requestAnimationFrame(animate);
+            } else {
+                currentX = (svgWidth / 2 - elementCenterX * targetScale);
+                currentY = (svgHeight / 2 - elementCenterY * targetScale);
+                scale = targetScale;
+                mapInner.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
+            }
+        }
+        requestAnimationFrame(animate);
     }
     
     // Обработчики кнопок
@@ -478,14 +444,27 @@ document.addEventListener('DOMContentLoaded', function() {
             let svgWidth = parseFloat(originalSvg.getAttribute('width')) || originalSvg.clientWidth;
             let svgHeight = parseFloat(originalSvg.getAttribute('height')) || originalSvg.clientHeight;
 
+            console.log('originalSvg.getAttribute(\'width\'):', originalSvg.getAttribute('width'));
+            console.log('originalSvg.clientWidth:', originalSvg.clientWidth);
+
             const viewBoxAttr = originalSvg.getAttribute('viewBox');
             if (viewBoxAttr) {
                 // viewBox defines the coordinate system. Ensure it's copied.
+                const viewBox = viewBoxAttr.split(' ').map(Number);
+                // Only update svgWidth and svgHeight if viewBox provides meaningful dimensions
+                // and we're not explicitly overriding them with the original SVG's attributes.
+                // We prioritize original SVG's width/height attributes, then clientWidth/Height, then viewBox.
+                if (!originalSvg.getAttribute('width') && viewBox[2]) {
+                    svgWidth = viewBox[2];
+                }
+                if (!originalSvg.getAttribute('height') && viewBox[3]) {
+                    svgHeight = viewBox[3];
+                }
                 clonedSvg.setAttribute('viewBox', viewBoxAttr);
             }
 
-            // Apply the desired width reduction here for the generated image.
-            svgWidth = Math.max(100, svgWidth - 600); // Reduce width by 600 pixels
+            // Reduce width by an additional 300 pixels as requested by the user
+            svgWidth = Math.max(100, svgWidth - 350); // Ensure width doesn't go below a reasonable minimum
 
             clonedSvg.setAttribute('width', svgWidth);
             clonedSvg.setAttribute('height', svgHeight);
@@ -526,15 +505,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // The live map (originalSvg) should already be in the desired centered state
-            // We just need to ensure the cloned map-inner gets the current transform
+            // Ensure mapInner is defined and accessible (it's a global variable)
             const mapInnerClone = clonedSvg.querySelector('#map-inner');
-            const currentTransformString = originalSvg.querySelector('#map-inner').getAttribute('transform');
-            if (mapInnerClone && currentTransformString) {
-                mapInnerClone.setAttribute('transform', currentTransformString);
+            if (mapInnerClone) {
+                // Use the global scale, currentX, currentY from the live map state
+                mapInnerClone.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
             }
 
-            // Remove previous console logs that are no longer relevant
+            console.log('originalSvg outerHTML:', originalSvg.outerHTML);
             console.log('clonedSvg outerHTML before domtoimage:', clonedSvg.outerHTML);
             console.log('clonedSvg width:', clonedSvg.getAttribute('width'));
             console.log('clonedSvg height:', clonedSvg.getAttribute('height'));
@@ -576,15 +554,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         shareText += `Присоединяйтесь и исследуйте!\n`; // Removed the URL from here
-
-        // Get the Moscow region element
-        const moscowRegion = document.getElementById('RU-MOS');
-        if (moscowRegion) {
-            await flyToElement(moscowRegion, 1200); // Animate to Moscow region over 1.2 seconds
-        } else {
-            console.warn('Moscow region element (RU-MOS) not found. Centering map globally instead.');
-            await centerMapSmoothly(); // Fallback to global centering
-        }
 
         const mapImage = await generateMapImage(); // Генерируем изображение карты
 
@@ -785,7 +754,7 @@ svg.addEventListener('touchmove', function (e) {
 });
 
 svg.addEventListener('touchend', function () {
-        isTouching = false;
+    isTouching = false;
     if (isPinching) {
         isPinching = false;
         // currentX, currentY и scale уже были обновлены в touchmove

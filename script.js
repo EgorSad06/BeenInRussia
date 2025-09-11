@@ -469,6 +469,9 @@ document.addEventListener('DOMContentLoaded', function() {
             clonedSvg.setAttribute('width', svgWidth);
             clonedSvg.setAttribute('height', svgHeight);
 
+            // Set background color to white for the cloned SVG
+            clonedSvg.style.backgroundColor = 'white';
+
             // NEW: Копируем вычисленные стили для регионов, заповедников и достопримечательностей
             const elementsToStyle = ['.region', '.reserve', '.attraction', '.poi'];
             elementsToStyle.forEach(selector => {

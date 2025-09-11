@@ -664,7 +664,7 @@ svg.addEventListener('touchstart', function (e) {
         } else {
             isTapCandidate = false;
         }
-        // e.preventDefault(); // Пока не вызываем, чтобы дать сработать возможному click
+        e.preventDefault(); // NEW: Предотвращаем прокрутку страницы сразу для одиночного касания
     } else if (e.touches.length === 2) { // Два пальца для масштабирования (pinch-to-zoom)
         isPinching = true;
         isTouching = false; // Отключаем панорамирование одним пальцем

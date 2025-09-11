@@ -440,15 +440,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const originalSvg = document.querySelector('svg');
             const clonedSvg = originalSvg.cloneNode(true);
 
-            let svgWidth = originalSvg.clientWidth;
-            let svgHeight = originalSvg.clientHeight;
+            // Use explicit width/height attributes from originalSvg if available, otherwise fallback to client dimensions.
+            let svgWidth = parseFloat(originalSvg.getAttribute('width')) || originalSvg.clientWidth;
+            let svgHeight = parseFloat(originalSvg.getAttribute('height')) || originalSvg.clientHeight;
 
             const viewBoxAttr = originalSvg.getAttribute('viewBox');
             if (viewBoxAttr) {
-                const viewBox = viewBoxAttr.split(' ').map(Number);
-                svgWidth = viewBox[2];
-                svgHeight = viewBox[3];
-                clonedSvg.setAttribute('viewBox', viewBoxAttr); // NEW: Копируем viewBox
+                // viewBox defines the coordinate system. Ensure it's copied.
+                clonedSvg.setAttribute('viewBox', viewBoxAttr);
             }
 
             clonedSvg.setAttribute('width', svgWidth);
@@ -483,13 +482,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // Извлекаем текущие трансформации из mapInner
-            const currentTransformString = mapInner.getAttribute('transform');
-            
-            // Применяем эти трансформации к корневому элементу map-inner внутри клонированного SVG
+            // Ensure mapInner is defined and accessible (it's a global variable)
             const mapInnerClone = clonedSvg.querySelector('#map-inner');
-            if (mapInnerClone && currentTransformString) {
-                mapInnerClone.setAttribute('transform', currentTransformString);
+            if (mapInnerClone) {
+                // Use the global scale, currentX, currentY from the live map state
+                mapInnerClone.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
             }
 
             console.log('originalSvg outerHTML:', originalSvg.outerHTML);

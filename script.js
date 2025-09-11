@@ -604,21 +604,15 @@ svg.addEventListener('mousemove', function (e) {
     if (!isPanning) return;
 
     // Вычисляем новое смещение, основываясь на начальной позиции и текущем положении курсора
-    const newX = (e.clientX - startX);
-    const newY = (e.clientY - startY);
+    currentX = (e.clientX - startX);
+    currentY = (e.clientY - startY);
 
-    mapInner.setAttribute('transform', `translate(${newX}, ${newY}) scale(${scale})`);
+    mapInner.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
 });
 
 svg.addEventListener('mouseup', function (e) {
     if (e.button === 2 && isPanning) {
-        // Пересчитываем dx и dy здесь, чтобы они были доступны
-        const newX = (e.clientX - startX);
-        const newY = (e.clientY - startY);
-
-        currentX = newX; // Обновляем текущее смещение
-        currentY = newY; // Обновляем текущее смещение
-
+        // currentX и currentY уже обновлены в mousemove
         isPanning = false;
         svg.style.cursor = 'default';
     }
@@ -707,30 +701,26 @@ svg.addEventListener('touchmove', function (e) {
         // Определяем, было ли значительное движение
         const deltaX = Math.abs(currentTouchX - lastTouchX);
         const deltaY = Math.abs(currentTouchY - lastTouchY);
-        // const moveThreshold = 5; // Порог в пикселях для определения движения
 
         if (deltaX > moveThreshold || deltaY > moveThreshold) {
-            // console.log('touchmove - Detected significant movement, setting hasMoved to true.'); // Отладочное сообщение
             hasMoved = true;
-            // Если было значительное движение, отменяем потенциальный тап
             if (tapTimer) {
                 clearTimeout(tapTimer);
                 tapTimer = null;
                 isTapCandidate = false;
             }
-            e.preventDefault(); // Предотвращаем прокрутку страницы, если есть движение
+            e.preventDefault();
         }
 
         lastTouchX = currentTouchX;
         lastTouchY = currentTouchY;
 
-        if (hasMoved) { // Если мы уже начали двигать, то панорамируем
-            const newX = (e.touches[0].clientX - touchStartX);
-            const newY = (e.touches[0].clientY - touchStartY);
+        if (hasMoved) {
+            currentX = (e.touches[0].clientX - touchStartX);
+            currentY = (e.touches[0].clientY - touchStartY);
 
-            mapInner.setAttribute('transform', `translate(${newX}, ${newY}) scale(${scale})`);
-            touchCurrentX = newX;
-            touchCurrentY = newY;
+            mapInner.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
+            // touchCurrentX and touchCurrentY are no longer needed as currentX/currentY are updated directly
         }
     } else if (isPinching && e.touches.length === 2) {
         const touch1 = e.touches[0];

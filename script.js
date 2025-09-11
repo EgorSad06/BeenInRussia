@@ -589,207 +589,207 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     .control-btn.active {
-        color: var(--primary-color);
-        border-color: var(--primary-color);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
     }
 
     .control-btn i {
-        font-size: 1.5rem;
-        margin-bottom: 5px;
+    font-size: 1.5rem;
+    margin-bottom: 5px;
     }
 
     .modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 100;
-        justify-content: center;
-        align-items: center;
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
     }
 
     .modal-content {
-        background-color: var(--white);
-        border-radius: 12px;
-        width: 90%;
-        max-width: 400px;
-        padding: 20px;
-        box-shadow: var(--shadow);
-        animation: modalFadeIn 0.3s ease;
+    background-color: var(--white);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+    animation: modalFadeIn 0.3s ease;
     }
 
     @keyframes modalFadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
     }
 
     .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
     }
 
     .modal-header h2 {
-        font-size: 1.2rem;
-        font-weight: 600;
+    font-size: 1.2rem;
+    font-weight: 600;
     }
 
     .close-btn {
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        cursor: pointer;
-        color: var(--dark-gray);
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--dark-gray);
     }
 
     .progress-bar {
-        width: 100%;
-        height: 10px;
-        background-color: #e0e0e0;
-        border-radius: 5px;
-        margin: 15px 0;
-        overflow: hidden;
+    width: 100%;
+    height: 10px;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    margin: 15px 0;
+    overflow: hidden;
     }
 
     .progress-fill {
-        height: 100%;
-        background-color: var(--primary-color);
-        border-radius: 5px;
-        transition: width 0.5s ease;
+    height: 100%;
+    background-color: var(--primary-color);
+    border-radius: 5px;
+    transition: width 0.5s ease;
     }
 
     .progress-text {
-        text-align: center;
-        font-size: 1rem;
-        margin-bottom: 10px;
+    text-align: center;
+    font-size: 1rem;
+    margin-bottom: 10px;
     }
 
     .info-text {
-        line-height: 1.5;
-        margin-bottom: 15px;
+    line-height: 1.5;
+    margin-bottom: 15px;
     }
 
     .layer-selector {
-        display: flex;
-        flex-direction: column; /* Изменено с row на column */
-        justify-content: space-around;
-        margin: 15px 0;
+    display: flex;
+    flex-direction: column; /* Изменено с row на column */
+    justify-content: space-around;
+    margin: 15px 0;
     }
 
     .layer-btn {
-        padding: 8px 15px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        background-color: var(--white);
-        cursor: pointer;
-        transition: all 0.2s ease;
+    padding: 8px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: var(--white);
+    cursor: pointer;
+    transition: all 0.2s ease;
     }
 
     .layer-btn.active {
-        background-color: var(--primary-color);
-        color: var(--white);
-        border-color: var(--primary-color);
+    background-color: var(--primary-color);
+    color: var(--white);
+    border-color: var(--primary-color);
     }
 
     .tooltip {
-        position: absolute;
-        background-color: rgba(0, 0, 0, 0.8);
-        color: white;
-        padding: 8px 12px;
-        border-radius: 6px;
-        font-size: 0.9rem;
-        pointer-events: none;
-        z-index: 10;
-        opacity: 0;
-        transition: opacity 0.2s;
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.2s;
     }
 
     .poi {
-        cursor: pointer;
-        pointer-events: visiblePainted; /* важно для SVG */
-        fill: #ffb74d;   /* базовый цвет точки (если не задан в атрибуте) */
-        stroke: #d84315;
-        stroke-width: 1;
-        transition: transform 0.15s, fill 0.15s;
+    cursor: pointer;
+    pointer-events: visiblePainted; /* важно для SVG */
+    fill: #ffb74d;   /* базовый цвет точки (если не задан в атрибуте) */
+    stroke: #d84315;
+    stroke-width: 1;
+    transition: transform 0.15s, fill 0.15s;
     }
 
     .poi:hover {
-        fill: #ff8a50;
+    fill: #ff8a50;
     }
 
     .poi.visited {
-        fill: #4caf50;
-        stroke: #2e7d32;
+    fill: #4caf50;
+    stroke: #2e7d32;
     }
 
     /* Стили для панели подтверждения */
     .confirmation-panel {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background-color: var(--white);
-        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
-        padding: 15px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        transform: translateY(100%); /* Скрываем по умолчанию */
-        transition: transform 0.3s ease-out;
-        z-index: 110;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: var(--white);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translateY(100%); /* Скрываем по умолчанию */
+    transition: transform 0.3s ease-out;
+    z-index: 110;
     }
 
     .confirmation-panel.visible {
-        transform: translateY(0%); /* Показываем панель */
+    transform: translateY(0%); /* Показываем панель */
     }
 
     .confirmation-panel .panel-content {
-        text-align: center;
-        width: 100%;
+    text-align: center;
+    width: 100%;
     }
 
     .confirmation-panel p {
-        margin-bottom: 15px;
-        font-size: 1.1rem;
-        font-weight: 500;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    font-weight: 500;
     }
 
     .confirmation-panel button {
-        background-color: var(--primary-color);
-        color: var(--white);
-        border: none;
-        padding: 12px 25px;
-        border-radius: 8px;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-        width: 100%;
-        max-width: 250px;
+    background-color: var(--primary-color);
+    color: var(--white);
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    width: 100%;
+    max-width: 250px;
     }
 
     .confirmation-panel button:hover {
-        background-color: #388e3c;
+    background-color: #388e3c;
     }
 
     @media (min-width: 600px) {
-        .confirmation-panel {
-            width: 350px; /* Шире для десктопа */
-            left: 50%;
-            transform: translateX(-50%) translateY(100%);
-        }
-        .confirmation-panel.visible {
-            transform: translateX(-50%) translateY(0%);
-        }
+    .confirmation-panel {
+        width: 350px; /* Шире для десктопа */
+        left: 50%;
+        transform: translateX(-50%) translateY(100%);
+    }
+    .confirmation-panel.visible {
+        transform: translateX(-50%) translateY(0%);
+    }
     }
 `;
             clonedSvg.insertBefore(style, clonedSvg.firstChild);
@@ -801,6 +801,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const mapInnerClone = clonedSvg.querySelector('#map-inner');
             if (mapInnerClone && currentTransformString) {
                 mapInnerClone.setAttribute('transform', currentTransformString);
+            }
+
+            console.log('originalSvg outerHTML:', originalSvg.outerHTML);
+            console.log('clonedSvg outerHTML before domtoimage:', clonedSvg.outerHTML);
+            console.log('clonedSvg width:', clonedSvg.getAttribute('width'));
+            console.log('clonedSvg height:', clonedSvg.getAttribute('height'));
+            if (mapInnerClone) {
+                console.log('mapInnerClone transform:', mapInnerClone.getAttribute('transform'));
             }
 
             const dataUrl = await domtoimage.toPng(clonedSvg, {

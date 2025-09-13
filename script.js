@@ -554,8 +554,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         shareText += `Присоединяйтесь и исследуйте!\n`; // Removed the URL from here
-        shareText += `Наш телеграм канал:          https://t.me/BeenInRussia\n`;
-        shareText += `Отметить свои достижения:`;
+             shareText += `Присоединяйтесь и исследуйте!\n`; // Removed the URL from here
+        shareText += `Наш телеграм канал:\nhttps://t.me/BeenInRussia\n`;
+        shareText += `Отметить свои достижения: http://beeninrussia.ru/`;
 
         const mapImage = await generateMapImage(); // Генерируем изображение карты
 
@@ -571,14 +572,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 await navigator.share(shareData);
             } catch (error) {
                 console.error('Error sharing:', error);
-                alert('Чтобы поделиться, скопируйте текст: ' + shareText + ' http://beeninrussia.ru/');
+                alert('Чтобы поделиться, скопируйте текст: ' + shareText);
             }
         } else {
-            alert('Чтобы поделиться, скопируйте текст: ' + shareText + ' http://beeninrussia.ru/');
+            alert('Чтобы поделиться, скопируйте текст: ' + shareText);
         }
     }
-
-
     // Инициализация приложения
     initMap();
 

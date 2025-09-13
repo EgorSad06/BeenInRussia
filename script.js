@@ -565,7 +565,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const shareData = {
                     title: 'Мои путешествия по России',
                     text: shareText,
-                    url: 'http://beeninrussia.ru/',
                     files: mapImage ? [new File([await fetch(mapImage).then(res => res.blob())], 'map.png', { type: 'image/png' })] : []
                 };
                 console.log('Sharing data:', shareData);

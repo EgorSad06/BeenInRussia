@@ -554,6 +554,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         shareText += `Присоединяйтесь и исследуйте!\n`; // Removed the URL from here
+        shareText += `Наш телеграм канал: https://t.me/BeenInRussia\n`;
+        shareText += `Отметить свои достижения: http://beeninrussia.ru/`;
 
         const mapImage = await generateMapImage(); // Генерируем изображение карты
 

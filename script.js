@@ -441,30 +441,31 @@ document.addEventListener('DOMContentLoaded', function() {
             const clonedSvg = originalSvg.cloneNode(true);
 
             // Use explicit width/height attributes from originalSvg if available, otherwise fallback to client dimensions.
-            let svgWidth = parseFloat(originalSvg.getAttribute('width')) || originalSvg.clientWidth;
-            let svgHeight = parseFloat(originalSvg.getAttribute('height')) || originalSvg.clientHeight;
+            let svgWidth = parseFloat(originalSvg.getAttribute('width'));
+            let svgHeight = parseFloat(originalSvg.getAttribute('height'));
 
-            console.log('originalSvg.getAttribute(\'width\'):', originalSvg.getAttribute('width'));
-            console.log('originalSvg.clientWidth:', originalSvg.clientWidth);
-
+            // If width/height attributes are not explicitly set, try to use viewBox dimensions.
             const viewBoxAttr = originalSvg.getAttribute('viewBox');
             if (viewBoxAttr) {
-                // viewBox defines the coordinate system. Ensure it's copied.
                 const viewBox = viewBoxAttr.split(' ').map(Number);
-                // Only update svgWidth and svgHeight if viewBox provides meaningful dimensions
-                // and we're not explicitly overriding them with the original SVG's attributes.
-                // We prioritize original SVG's width/height attributes, then clientWidth/Height, then viewBox.
-                if (!originalSvg.getAttribute('width') && viewBox[2]) {
+                if (isNaN(svgWidth) && viewBox[2]) {
                     svgWidth = viewBox[2];
                 }
-                if (!originalSvg.getAttribute('height') && viewBox[3]) {
+                if (isNaN(svgHeight) && viewBox[3]) {
                     svgHeight = viewBox[3];
                 }
                 clonedSvg.setAttribute('viewBox', viewBoxAttr);
             }
 
-            // Reduce width by an additional 300 pixels as requested by the user
-            svgWidth = Math.max(100, svgWidth - 350); // Ensure width doesn't go below a reasonable minimum
+            // Fallback to client dimensions if neither explicit attributes nor viewBox provide dimensions.
+            if (isNaN(svgWidth)) {
+                svgWidth = originalSvg.clientWidth;
+            }
+            if (isNaN(svgHeight)) {
+                svgHeight = originalSvg.clientHeight;
+            }
+
+            // svgWidth = Math.max(100, svgWidth - 350); // This line was commented out previously
 
             clonedSvg.setAttribute('width', svgWidth);
             clonedSvg.setAttribute('height', svgHeight);
@@ -554,9 +555,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         shareText += `Присоединяйтесь и исследуйте!\n`; // Removed the URL from here
-             shareText += `Присоединяйтесь и исследуйте!\n`; // Removed the URL from here
         shareText += `Наш телеграм канал:\nhttps://t.me/BeenInRussia\n`;
-        shareText += `Отметить свои достижения:`;
+        shareText += `Отметить свои достижения: http://beeninrussia.ru/`;
 
         const mapImage = await generateMapImage(); // Генерируем изображение карты
 
@@ -577,6 +577,8 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Чтобы поделиться, скопируйте текст: ' + shareText);
         }
     }
+
+
     // Инициализация приложения
     initMap();
 

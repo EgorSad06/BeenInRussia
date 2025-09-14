@@ -7,9 +7,9 @@ const isIOS = /iP(hone|od|ad)/.test(navigator.platform);
 const debugIOSStatus = document.getElementById('debug-ios-status');
 if (debugIOSStatus) {
     debugIOSStatus.textContent = 'isIOS: ' + isIOS + ' (Platform: ' + navigator.platform + ')';
-}
+}       
 
-// Глобальные переменные для управления картой
+// Глобальные переменные для управления картойфыв
 let scale = 1;
 let currentX = 0;
 let currentY = 0;

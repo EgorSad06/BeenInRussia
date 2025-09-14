@@ -7,9 +7,9 @@ const isIOS = /iP(hone|od|ad)/.test(navigator.platform);
 const debugIOSStatus = document.getElementById('debug-ios-status');
 if (debugIOSStatus) {
     debugIOSStatus.textContent = 'isIOS: ' + isIOS + ' (Platform: ' + navigator.platform + ')';
-}       
+}
 
-// Глобальные переменные для управления картойфыв
+// Глобальные переменные для управления картой
 let scale = 1;
 let currentX = 0;
 let currentY = 0;
@@ -1125,5 +1125,3 @@ svg.addEventListener('touchend', function () {
         mapInner.setAttribute('transform', `translate(${currentX}, ${currentY}) scale(${scale})`);
     });
 });
-
-

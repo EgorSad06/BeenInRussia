@@ -1,7 +1,13 @@
-
 const tooltip = document.getElementById('tooltip');
 let hideTooltipTimeout; // Для задержки скрытия
 let tooltipHovered = false; // Для отслеживания наведения на саму подсказку
+
+const isIOS = /iP(hone|od|ad)/.test(navigator.platform);
+
+const debugIOSStatus = document.getElementById('debug-ios-status');
+if (debugIOSStatus) {
+    debugIOSStatus.textContent = 'isIOS: ' + isIOS + ' (Platform: ' + navigator.platform + ')';
+}
 
 // Глобальные переменные для управления картой
 let scale = 1;
@@ -37,6 +43,7 @@ document.querySelectorAll('.region').forEach(region => {
 });
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Определение iOS
     // Элементы DOM
     const regions = document.querySelectorAll('.region');
     const progressModal = document.getElementById('progress-modal');
@@ -425,8 +432,18 @@ document.addEventListener('DOMContentLoaded', function() {
         return ((visitedCount / totalAttractions) * 100).toFixed(0);
     }
 
-    // NEW: Функция для генерации изображения карты
     async function generateMapImage() {
+        if (isIOS) {
+            console.log('iOS detected, using generateMapImageIOS()');
+            return await generateMapImageIOS();
+        } else {
+            console.log('Not iOS, using default generateMapImage()');
+            return await generateMapImageDefault();
+        }
+    }
+
+    // NEW: Функция для генерации изображения карты
+    async function generateMapImageDefault() {
         const mapContainer = document.querySelector('.map-container'); // Или любой другой элемент, содержащий SVG
         
         // Убедимся, что domtoimage загружен
@@ -541,8 +558,11 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('clonedSvg height:', clonedSvg.getAttribute('height'));
             if (mapInnerClone) {
                 console.log('mapInnerClone transform:', mapInnerClone.getAttribute('transform'));
+                mapInnerClone.setAttribute('transform', `translate(0, 0) scale(1)`);
             }
 
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
             const dataUrl = await domtoimage.toPng(clonedSvg, {
                 width: svgWidth,
                 height: svgHeight,
@@ -557,6 +577,138 @@ document.addEventListener('DOMContentLoaded', function() {
             return null;
         }
     }
+
+    async function generateMapImageIOS() {
+        try {
+            const originalSvg = document.querySelector('svg');
+            if (!originalSvg) {
+                console.error('generateMapImageIOS: SVG not found');
+                return null;
+            }
+    
+            // ✅ Берём "идеальные" размеры как в generateMapImageDefault
+            const svgWidth = 1300;
+            const svgHeight = 1000;
+    
+            // ✅ Принудительно ставим viewBox, если его нет
+            const vb = originalSvg.getAttribute('viewBox') || `0 0 ${svgWidth} ${svgHeight}`;
+    
+            console.log('generateMapImageIOS: using fixed size', svgWidth, 'x', svgHeight, 'viewBox', vb);
+    
+            const clonedSvg = originalSvg.cloneNode(true);
+            clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            clonedSvg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+            clonedSvg.setAttribute('width', svgWidth);
+            clonedSvg.setAttribute('height', svgHeight);
+            clonedSvg.setAttribute('viewBox', vb);
+            clonedSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    
+            // ✅ Сбрасываем transform, чтобы карта всегда была в исходном положении
+            const mapInnerClone = clonedSvg.querySelector('#map-inner');
+            if (mapInnerClone) {
+                mapInnerClone.setAttribute('transform', `translate(0, 0) scale(1)`);
+            }
+    
+            // Пробуем инлайнить computed styles: проходим по узлам оригинала и клона параллельно
+            const origNodes = originalSvg.querySelectorAll('*');
+            const cloneNodes = clonedSvg.querySelectorAll('*');
+            const len = Math.min(origNodes.length, cloneNodes.length);
+    
+            for (let i = 0; i < len; i++) {
+                const o = origNodes[i];
+                const c = cloneNodes[i];
+                if (!o || !c) continue;
+    
+                try {
+                    const cs = window.getComputedStyle(o);
+                    const props = [
+                        'fill', 'stroke', 'stroke-width', 'opacity',
+                        'fill-opacity', 'stroke-opacity', 'stroke-linejoin',
+                        'stroke-linecap', 'font-family', 'font-size', 'font-weight',
+                        'text-anchor', 'vector-effect', 'shape-rendering', 'paint-order'
+                    ];
+                    props.forEach(p => {
+                        const v = cs.getPropertyValue(p);
+                        if (v && v !== 'initial' && v !== '') {
+                            try { c.setAttribute(p, v); } catch (e) { /* ignore */ }
+                        }
+                    });
+    
+                    let styleString = '';
+                    for (let j = 0; j < cs.length; j++) {
+                        const name = cs[j];
+                        if (name.indexOf('transition') !== -1 || name.indexOf('animation') !== -1) continue;
+                        if (name === '-webkit-tap-highlight-color') continue;
+                        const val = cs.getPropertyValue(name);
+                        if (!val) continue;
+                        styleString += `${name}:${val};`;
+                    }
+                    if (styleString) c.setAttribute('style', styleString);
+                } catch (err) {
+                    // не критично
+                }
+            }
+    
+            // Сериализуем
+            const svgString = new XMLSerializer().serializeToString(clonedSvg);
+    
+            // Создаём blob -> objectURL
+            const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+    
+            // Рендерим в <img> -> canvas
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+    
+            const pixelRatio = window.devicePixelRatio || 1;
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(svgWidth * pixelRatio);
+            canvas.height = Math.round(svgHeight * pixelRatio);
+            canvas.style.width = svgWidth + 'px';
+            canvas.style.height = svgHeight + 'px';
+            const ctx = canvas.getContext('2d');
+    
+            // Promise обёртка для загрузки изображения
+            const dataUrl = await new Promise((resolve) => {
+                img.onload = function () {
+                    try {
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        URL.revokeObjectURL(url);
+                        const out = canvas.toDataURL('image/png');
+                        resolve(out);
+                    } catch (e) {
+                        console.error('generateMapImageIOS: drawImage/toDataURL failed', e);
+                        try { URL.revokeObjectURL(url); } catch (er) {}
+                        resolve(null);
+                    }
+                };
+                img.onerror = function (err) {
+                    console.error('generateMapImageIOS: img.onerror', err);
+                    try { URL.revokeObjectURL(url); } catch (er) {}
+                    resolve(null);
+                };
+                img.src = url;
+            });
+    
+            if (!dataUrl) {
+                console.warn('generateMapImageIOS: result is null (serialization -> img -> canvas failed)');
+            } else {
+                console.log('generateMapImageIOS: dataUrl length', dataUrl.length);
+            }
+    
+            return dataUrl;
+        } catch (err) {
+            console.error('generateMapImageIOS: unexpected error', err);
+            return null;
+        }
+    }
+    
+
+    
+    
+    
 
     // Функция для обработки кнопки "Поделиться"
     async function shareResults() {
@@ -601,6 +753,8 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             alert('Чтобы поделиться, скопируйте текст: ' + shareText);
         }
+
+        
     }
 
 
